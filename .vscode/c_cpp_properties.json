@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${default}",
+                ".",
+                "C:/Qt/5.15.2/mingw81_64/include",
+                "C:/Qt/5.15.2/mingw81_64/include/QtWidgets",
+                "C:/Qt/5.15.2/mingw81_64/include/QtGui",
+                "C:/Qt/5.15.2/mingw81_64/include/QtANGLE",
+                "C:/Qt/5.15.2/mingw81_64/include/QtCore",
+                "C:/Qt/5.15.2/mingw81_64/mkspecs/win32-g++",
+                "../build-bmstu-iu7-cg-cp-Desktop_Qt_5_15_2_MinGW_64_bit-Debug",
+                "../build-bmstu-iu7-cg-cp-Desktop_Qt_5_15_2_MinGW_64_bit-Release"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "g++",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
