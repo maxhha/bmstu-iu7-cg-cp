@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "src/Engine.h"
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
@@ -20,5 +21,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    std::unique_ptr<CGCP::Engine> engine_;
 };
 #endif // MAINWINDOW_H

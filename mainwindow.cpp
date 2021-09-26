@@ -1,8 +1,9 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include "src/Polygon.h"
-#include <QGraphicsView>
+#include "src/QtEngine.h"
+#include "ui_mainwindow.h"
 #include <QGraphicsScene>
+#include <QGraphicsView>
 #include <QPolygonF>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -17,23 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     auto view = ui->graphicsView;
-    auto scene = new QGraphicsScene(ui->graphicsView);
-
-    view->setScene(scene);
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scene->setSceneRect(0, 0, view->geometry().width(), view->geometry().height());
-
-    view->show();
-
-    QPolygonF polygon;
-
-    for (const auto &it : p.points())
-    {
-        polygon << QPointF(it.x(), it.y());
-    }
-
-    scene->addPolygon(polygon);
+    engine_ = std::make_unique<QtEngine>(view);
+    engine_->drawer().get("main");
 }
 
 MainWindow::~MainWindow()
