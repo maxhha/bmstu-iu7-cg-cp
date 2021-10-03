@@ -5,6 +5,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QPolygonF>
+#include <math.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -29,4 +30,32 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::on_buttonTranslate_clicked()
+{
+    double x = ui->inputTranslateX->value();
+    double y = ui->inputTranslateY->value();
+    double z = ui->inputTranslateZ->value();
+
+    engine_->drawer().get("main").translate(CGCP::Vec3Df(x, y, z));
+}
+
+void MainWindow::on_buttonScale_clicked()
+{
+    double x = ui->inputScaleX->value();
+    double y = ui->inputScaleY->value();
+    double z = ui->inputScaleZ->value();
+
+    engine_->drawer().get("main").scale(CGCP::Vec3Df(x, y, z));
+}
+
+void MainWindow::on_buttonRotate_clicked()
+{
+    double x = ui->inputRotateX->value();
+    double y = ui->inputRotateY->value();
+    double z = ui->inputRotateZ->value();
+    double angle = ui->inputRotateAngle->value();
+
+    engine_->drawer().get("main").rotate(CGCP::Vec3Df(x, y, z), angle);
 }

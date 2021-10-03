@@ -19,6 +19,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_buttonTranslate_clicked();
+
+    void on_buttonScale_clicked();
+
+    void on_buttonRotate_clicked();
+
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<CGCP::Engine> engine_;
