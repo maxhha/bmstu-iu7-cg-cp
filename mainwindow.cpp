@@ -12,9 +12,16 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    auto mesh = std::make_shared<CGCP::Mesh>(CGCP::Mesh({CGCP::Triangle3Df(CGCP::Vec3Df(0, 0, 0),
-                                                                           CGCP::Vec3Df(100, 0, 0),
-                                                                           CGCP::Vec3Df(0, 100, 0))}));
+    auto mesh = std::make_shared<CGCP::Mesh>(CGCP::Mesh({
+        CGCP::Triangle3Df(CGCP::Vec3Df(-5, -5, 10),
+                          CGCP::Vec3Df(5, -5, 10),
+                          CGCP::Vec3Df(5, 5, 10)),
+        CGCP::Triangle3Df(CGCP::Vec3Df(-5, -5, 10),
+                          CGCP::Vec3Df(-5, 5, 10),
+                          CGCP::Vec3Df(5, 5, 10)),
+    }));
+
+    mesh->origin() = CGCP::Vec3Df(0, 0, 10);
 
     CGCP::Polygon p({
         CGCP::Point(0, 0, 0),
@@ -24,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto view = ui->graphicsView;
     engine_ = std::make_unique<QtEngine>(view);
+
     engine_->drawer().get("main").setMesh(mesh);
 }
 

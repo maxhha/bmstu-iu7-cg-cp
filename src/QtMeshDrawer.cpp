@@ -1,6 +1,10 @@
 #include "QtMeshDrawer.h"
 #include <QDebug>
 
+#define PERSPECTIVE_VERTICAL_ANGLE 90
+#define PERSPECTIVE_NEAR_PLANE 0.1
+#define PERSPECTIVE_FAR_PLANE 20
+
 static inline QVector3D Vec3Df2QVector3D(const CGCP::Vec3Df &v)
 {
     return QVector3D(v.x(), v.y(), v.z());
@@ -22,6 +26,17 @@ void QtMeshDrawer::setMesh(const std::shared_ptr<CGCP::Mesh> mesh)
 void QtMeshDrawer::drawMesh()
 {
     scene_->clear();
+    scene_->setSceneRect(0, 0, view_->geometry().width(), view_->geometry().height());
+
+    double ratio = view_->geometry().width() / view_->geometry().height();
+
+    projective_.setToIdentity();
+
+    projective_.perspective(
+        PERSPECTIVE_VERTICAL_ANGLE,
+        ratio,
+        PERSPECTIVE_NEAR_PLANE,
+        PERSPECTIVE_FAR_PLANE);
 
     for (const auto &it : mesh_->triangles())
     {
@@ -39,12 +54,19 @@ void QtMeshDrawer::drawMesh()
 
 QPointF QtMeshDrawer::transform(const CGCP::Vec3Df &p)
 {
+    double w = view_->geometry().width(), h = view_->geometry().height();
+
     QVector3D v = Vec3Df2QVector3D(p);
     QVector3D origin = Vec3Df2QVector3D(mesh_->origin());
-    QVector3D center(view_->geometry().width() / 2, view_->geometry().height() / 2, 0);
+    QVector3D window_scale(w, h, 1);
+    QVector3D center(w / 2, h / 2, 0);
 
     v -= origin;
-    v = transformation_.map(v);
+    v *= scale_;
+    v = rotate_.map(v);
+    v += origin + translate_;
+    v = projective_.map(v);
+    v *= window_scale;
     v += center;
 
     return v.toPointF();
@@ -52,19 +74,19 @@ QPointF QtMeshDrawer::transform(const CGCP::Vec3Df &p)
 
 void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
 {
-    transformation_.rotate(phi, axis.x(), axis.y(), axis.z());
+    rotate_.rotate(phi, axis.x(), axis.y(), axis.z());
     drawMesh();
 }
 
 void QtMeshDrawer::translate(const CGCP::Vec3Df &offset)
 {
-    transformation_.translate(offset.x(), offset.y(), offset.z());
+    translate_ += Vec3Df2QVector3D(offset);
     drawMesh();
 }
 
 void QtMeshDrawer::scale(const CGCP::Vec3Df &scale)
 {
-    transformation_.scale(scale.x(), scale.y(), scale.z());
+    scale_ *= Vec3Df2QVector3D(scale);
     drawMesh();
 }
 

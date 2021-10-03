@@ -10,7 +10,10 @@ class QtMeshDrawer : public CGCP::MeshDrawer
 private:
     QGraphicsView *view_;
     QGraphicsScene *scene_;
-    QMatrix4x4 transformation_;
+    QVector3D scale_{1, 1, 1};
+    QVector3D translate_;
+    QMatrix4x4 rotate_;
+    QMatrix4x4 projective_;
 
     void drawMesh();
     QPointF transform(const CGCP::Vec3Df &p);

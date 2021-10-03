@@ -32,6 +32,6 @@ namespace CGCP
             return *items_[key];
         };
 
-        ~Solution(){};
+        ~Solution() = default;
     };
 } // namespace CGCP
