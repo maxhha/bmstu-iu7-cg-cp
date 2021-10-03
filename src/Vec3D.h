@@ -21,7 +21,22 @@ namespace CGCP
         const T &x() const { return x_; };
         const T &y() const { return y_; };
         const T &z() const { return z_; };
-        ~Vec3D() {}
+
+        template <typename B>
+        Vec3D<T> operator+(const Vec3D<B> &other) const
+        {
+            Vec3D<T> v(x_ + other.x(), y_ + other.y(), z_ + other.z());
+            return v;
+        };
+
+        template <typename B>
+        Vec3D<T> operator-(const Vec3D<B> &other) const
+        {
+            Vec3D<T> v(x_ - other.x(), y_ - other.y(), z_ - other.z());
+            return v;
+        };
+
+        ~Vec3D(){};
     };
 
     using Vec3Df = Vec3D<double>;

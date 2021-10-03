@@ -1,6 +1,11 @@
 #include "QtMeshDrawer.h"
 #include <QDebug>
 
+static inline QVector3D Vec3Df2QVector3D(const CGCP::Vec3Df &v)
+{
+    return QVector3D(v.x(), v.y(), v.z());
+}
+
 QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : view_(view), scene_(new QGraphicsScene(view))
 {
     view->setScene(scene_);
@@ -34,8 +39,15 @@ void QtMeshDrawer::drawMesh()
 
 QPointF QtMeshDrawer::transform(const CGCP::Vec3Df &p)
 {
-    QPointF center(view_->geometry().width() / 2, view_->geometry().height() / 2);
-    return transformation_.map(QVector3D(p.x(), p.y(), p.z())).toPointF() + center;
+    QVector3D v = Vec3Df2QVector3D(p);
+    QVector3D origin = Vec3Df2QVector3D(mesh_->origin());
+    QVector3D center(view_->geometry().width() / 2, view_->geometry().height() / 2, 0);
+
+    v -= origin;
+    v = transformation_.map(v);
+    v += center;
+
+    return v.toPointF();
 }
 
 void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
