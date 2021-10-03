@@ -13,7 +13,7 @@ private:
 public:
     explicit QtMeshDrawer(QGraphicsView *view);
 
-    virtual void setMesh(std::shared_ptr<CGCP::Mesh> mesh) override;
+    virtual void setMesh(const std::shared_ptr<CGCP::Mesh> mesh) override;
 
     virtual ~QtMeshDrawer() override;
 };

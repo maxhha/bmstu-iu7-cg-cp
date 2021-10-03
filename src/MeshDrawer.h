@@ -8,8 +8,11 @@ namespace CGCP
     class MeshDrawer
     {
     private:
+    protected:
+        std::shared_ptr<Mesh> mesh_;
+
     public:
-        virtual void setMesh(std::shared_ptr<Mesh> mesh) = 0;
+        virtual void setMesh(const std::shared_ptr<Mesh> mesh) { mesh_ = mesh; };
 
         virtual ~MeshDrawer() = default;
     };
