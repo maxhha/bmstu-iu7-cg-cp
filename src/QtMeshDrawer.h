@@ -3,8 +3,10 @@
 #include "MeshDrawer.h"
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QImage>
 #include <QMatrix4x4>
 #include <QWidget>
+#include <random>
 
 class QtMeshDrawer : public QWidget, public CGCP::MeshDrawer
 {
@@ -17,9 +19,15 @@ private:
     QVector3D translate_;
     QMatrix4x4 rotate_;
     QMatrix4x4 projection_;
+    QVector3D light_direction{1, 2, -3};
+    std::mt19937 color_rg_;
+    std::uniform_real_distribution<double> urd_normal_;
 
+    void drawWireframeMesh();
     void drawMesh();
-    QPointF transform(const CGCP::Vec3Df &p);
+    QVector3D transform(const CGCP::Vec3Df &p);
+    QVector3D transformMesh(const CGCP::Vec3Df &p);
+    QColor color(const CGCP::Triangle3Df &p);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
