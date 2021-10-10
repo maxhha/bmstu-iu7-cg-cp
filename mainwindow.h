@@ -26,6 +26,9 @@ private slots:
 
     void on_buttonRotate_clicked();
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<CGCP::Engine> engine_;

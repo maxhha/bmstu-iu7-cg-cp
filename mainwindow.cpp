@@ -1,10 +1,13 @@
 #include "mainwindow.h"
 #include "src/Polygon.h"
 #include "src/QtEngine.h"
+#include "src/QtMeshDrawer.h"
 #include "ui_mainwindow.h"
+#include <QDebug>
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QPolygonF>
+#include <QResizeEvent>
 #include <math.h>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -66,4 +69,9 @@ void MainWindow::on_buttonRotate_clicked()
     double angle = ui->inputRotateAngle->value();
 
     engine_->drawer().get("main").rotate(CGCP::Vec3Df(x, y, z), angle);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QApplication::sendEvent(dynamic_cast<QtMeshDrawer *>(&engine_->drawer().get("main")), event);
 }

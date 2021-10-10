@@ -1,5 +1,6 @@
 #include "QtMeshDrawer.h"
 #include <QDebug>
+#include <QEvent>
 
 #define PERSPECTIVE_VERTICAL_ANGLE 90
 #define PERSPECTIVE_NEAR_PLANE 0.1
@@ -10,11 +11,11 @@ static inline QVector3D Vec3Df2QVector3D(const CGCP::Vec3Df &v)
     return QVector3D(v.x(), v.y(), v.z());
 }
 
-QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : view_(view), scene_(new QGraphicsScene(view))
+QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), scene_(new QGraphicsScene(view_))
 {
-    view->setScene(scene_);
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view_->setScene(scene_);
+    view_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 };
 
 void QtMeshDrawer::setMesh(const std::shared_ptr<CGCP::Mesh> mesh)
@@ -28,11 +29,11 @@ void QtMeshDrawer::drawMesh()
     scene_->clear();
     scene_->setSceneRect(0, 0, view_->geometry().width(), view_->geometry().height());
 
-    double ratio = view_->geometry().width() / view_->geometry().height();
+    double ratio = (double)view_->geometry().width() / view_->geometry().height();
 
-    projective_.setToIdentity();
+    projection_.setToIdentity();
 
-    projective_.perspective(
+    projection_.perspective(
         PERSPECTIVE_VERTICAL_ANGLE,
         ratio,
         PERSPECTIVE_NEAR_PLANE,
@@ -65,11 +66,17 @@ QPointF QtMeshDrawer::transform(const CGCP::Vec3Df &p)
     v *= scale_;
     v = rotate_.map(v);
     v += origin + translate_;
-    v = projective_.map(v);
+    v = projection_.map(v);
     v *= window_scale;
     v += center;
 
     return v.toPointF();
+}
+
+void QtMeshDrawer::resizeEvent(QResizeEvent *event)
+{
+    drawMesh();
+    QWidget::resizeEvent(event);
 }
 
 void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
@@ -80,13 +87,13 @@ void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
 
 void QtMeshDrawer::translate(const CGCP::Vec3Df &offset)
 {
-    translate_ += Vec3Df2QVector3D(offset);
+    translate_ = Vec3Df2QVector3D(offset);
     drawMesh();
 }
 
 void QtMeshDrawer::scale(const CGCP::Vec3Df &scale)
 {
-    scale_ *= Vec3Df2QVector3D(scale);
+    scale_ = Vec3Df2QVector3D(scale);
     drawMesh();
 }
 

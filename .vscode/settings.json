@@ -78,6 +78,7 @@
     "cmake.configureOnOpen": false,
     "cSpell.words": [
         "CGCP",
-        "Drawer"
+        "Drawer",
+        "PERSPECTIVE"
     ]
 }
