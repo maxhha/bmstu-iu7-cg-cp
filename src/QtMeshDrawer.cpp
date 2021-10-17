@@ -117,30 +117,14 @@ void QtMeshDrawer::drawMesh()
 
     for (const auto &it : mesh_->triangles())
     {
-        drawTriangle(it);
-        // if (p3.y() == p1.y())
-        // {
-        //     // points of triangle is on a line
-        //     // TODO: draw line or just skip it
-
-        //     continue;
-        // }
-        // else
-        // {
-        //     double k = (p2.y() - p1.y()) / (p3.y() - p1.y());
-        //     auto p13 = p1 * (1 - k) + p3 * k;
-
-        //     fill(color_buffer_, &z_buffer_[0], p1, p1, p13, p2, c);
-        //     fill(color_buffer_, &z_buffer_[0], p13, p2, p3, p3, c);
-        // }
+        drawTriangle(color_buffer_, z_buffer_.get(), it, this->color(it));
     }
 
     scene_->addPixmap(QPixmap::fromImage(color_buffer_));
 }
 
-void QtMeshDrawer::drawTriangle(const CGCP::Triangle3Df &it)
+void QtMeshDrawer::drawTriangle(QImage &c_buf, double *z_buf, const CGCP::Triangle3Df &it, const QColor &color)
 {
-    auto color = this->color(it);
     auto p1 = transform(it.p1());
     auto p2 = transform(it.p2());
     auto p3 = transform(it.p3());
@@ -159,24 +143,15 @@ void QtMeshDrawer::drawTriangle(const CGCP::Triangle3Df &it)
             std::swap(p2, p1);
     }
 
-    int h = color_buffer_.height();
-    int w = color_buffer_.width();
+    int h = c_buf.height();
+    int w = c_buf.width();
 
-    int y1 = floor(p1.y()), y2 = floor(p3.y());
+    int y1 = clamp<int>(floor(p1.y()), 0, h);
+    int y2 = clamp<int>(floor(p3.y()), 0, h);
 
     double total_height = p3.y() - p1.y();
     double h1 = p2.y() - p1.y();
     double h2 = p3.y() - p2.y();
-
-    if (y1 < 0)
-    {
-        y1 = 0;
-    }
-
-    if (y2 > h)
-    {
-        y2 = h;
-    }
 
     for (int y = y1; y < y2; y++)
     {
@@ -211,10 +186,10 @@ void QtMeshDrawer::drawTriangle(const CGCP::Triangle3Df &it)
 
         for (int x = x1; x <= x2; x++)
         {
-            if (z > z_buffer_[y * w + x] && z > 0)
+            if (z > z_buf[y * w + x] && z > 0)
             {
-                z_buffer_[y * w + x] = z;
-                color_buffer_.setPixelColor(x, y, color);
+                z_buf[y * w + x] = z;
+                c_buf.setPixelColor(x, y, color);
             }
             z += dz;
         }

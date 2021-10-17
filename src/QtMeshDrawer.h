@@ -29,7 +29,7 @@ private:
     void drawMesh();
     void drawMeshWireframe();
 
-    void drawTriangle(const CGCP::Triangle3Df &it);
+    void drawTriangle(QImage &color_buffer, double *z_buffer, const CGCP::Triangle3Df &it, const QColor &color);
 
     void updateBuffers();
 
