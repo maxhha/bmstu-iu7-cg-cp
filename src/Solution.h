@@ -3,6 +3,9 @@
 #include <functional>
 #include <memory>
 
+#include "MeshDrawer.h"
+#include "Polygonizer.h"
+
 namespace CGCP
 {
     template <class T>
@@ -34,4 +37,7 @@ namespace CGCP
 
         ~Solution() = default;
     };
+
+    using DrawerSolution = Solution<MeshDrawer>;
+    using PolygonizerSolution = Solution<Polygonizer>;
 } // namespace CGCP

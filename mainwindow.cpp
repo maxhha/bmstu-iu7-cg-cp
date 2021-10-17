@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "src/Polygon.h"
 #include "src/QtEngine.h"
 #include "src/QtMeshDrawer.h"
 #include "ui_mainwindow.h"
@@ -15,39 +14,19 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    CGCP::Vec3Df v0(-5, -5, -5);
-    CGCP::Vec3Df v1(-5, -5, +5);
-    CGCP::Vec3Df v2(-5, +5, -5);
-    CGCP::Vec3Df v3(-5, +5, +5);
-    CGCP::Vec3Df v4(+5, -5, -5);
-    CGCP::Vec3Df v5(+5, -5, +5);
-    CGCP::Vec3Df v6(+5, +5, -5);
-    CGCP::Vec3Df v7(+5, +5, +5);
-
-    auto mesh = std::make_shared<CGCP::Mesh>(CGCP::Mesh({
-        CGCP::Triangle3Df(v0, v1, v3),
-        CGCP::Triangle3Df(v0, v2, v3),
-        CGCP::Triangle3Df(v4, v5, v7),
-        CGCP::Triangle3Df(v4, v6, v7),
-
-        CGCP::Triangle3Df(v0, v1, v5),
-        CGCP::Triangle3Df(v0, v4, v5),
-        CGCP::Triangle3Df(v2, v3, v7),
-        CGCP::Triangle3Df(v2, v6, v7),
-
-        CGCP::Triangle3Df(v1, v3, v7),
-        CGCP::Triangle3Df(v1, v5, v7),
-        CGCP::Triangle3Df(v0, v4, v6),
-        CGCP::Triangle3Df(v0, v2, v6),
-
-    }));
-
-    mesh->origin() = CGCP::Vec3Df(0, 0, 0);
-
     auto view = ui->graphicsView;
     engine_ = std::make_unique<QtEngine>(view);
 
-    engine_->drawer().get("main").setMesh(mesh);
+    engine_->polygonizer().get("dmc").run([=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+                                          {
+                                              qDebug() << "percent =" << percent;
+                                              if (mesh)
+                                              {
+                                                  qDebug() << "done!";
+                                              }
+                                          });
+
+    // engine_->drawer().get("main").setMesh(mesh);
 }
 
 MainWindow::~MainWindow()
