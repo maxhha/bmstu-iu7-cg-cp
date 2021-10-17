@@ -22,9 +22,17 @@ private:
     QVector3D light_direction{1, 2, -3};
     std::mt19937 color_rg_;
     std::uniform_real_distribution<double> urd_normal_;
+    QImage color_buffer_;
+    std::unique_ptr<double[]> z_buffer_;
 
-    void drawWireframeMesh();
+    void draw();
     void drawMesh();
+    void drawMeshWireframe();
+
+    void drawTriangle(const CGCP::Triangle3Df &it);
+
+    void updateBuffers();
+
     QVector3D transform(const CGCP::Vec3Df &p);
     QVector3D transformMesh(const CGCP::Vec3Df &p);
     QColor color(const CGCP::Triangle3Df &p);

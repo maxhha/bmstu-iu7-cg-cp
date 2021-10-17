@@ -15,25 +15,47 @@ static inline QVector3D Vec3Df2QVector3D(const CGCP::Vec3Df &v)
     return QVector3D(v.x(), v.y(), v.z());
 }
 
-QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), scene_(new QGraphicsScene(view_)), urd_normal_(-0.05, 0.05)
+template <typename T>
+static inline T clamp(T x, T min_x, T max_x)
+{
+    if (x < min_x)
+        return min_x;
+    if (x > max_x)
+        return max_x;
+    return x;
+}
+
+QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), scene_(new QGraphicsScene(view_)), urd_normal_(-0.08, 0.08)
 {
     light_direction.normalize();
 
     view_->setScene(scene_);
     view_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    updateBuffers();
+    translate(CGCP::Vec3Df(0, 0, -20));
 };
+
+void QtMeshDrawer::updateBuffers()
+{
+    int w = view_->geometry().width();
+    int h = view_->geometry().height();
+
+    color_buffer_ = QImage(w, h, QImage::Format::Format_ARGB32_Premultiplied);
+    z_buffer_ = std::make_unique<double[]>(w * h);
+}
 
 void QtMeshDrawer::setMesh(const std::shared_ptr<CGCP::Mesh> mesh)
 {
     MeshDrawer::setMesh(mesh);
-    drawMesh();
+    draw();
 };
 
-void QtMeshDrawer::drawWireframeMesh()
+void QtMeshDrawer::drawMeshWireframe()
 {
-    scene_->clear();
-    scene_->setSceneRect(0, 0, view_->geometry().width(), view_->geometry().height());
+    if (!mesh_)
+        return;
 
     double ratio = (double)view_->geometry().width() / view_->geometry().height();
 
@@ -45,6 +67,8 @@ void QtMeshDrawer::drawWireframeMesh()
         PERSPECTIVE_NEAR_PLANE,
         PERSPECTIVE_FAR_PLANE);
 
+    QPen pen(QColor("#ff0000"), 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+
     for (const auto &it : mesh_->triangles())
     {
         QPolygonF polygon;
@@ -53,99 +77,33 @@ void QtMeshDrawer::drawWireframeMesh()
         polygon << transform(it.p2()).toPointF();
         polygon << transform(it.p3()).toPointF();
 
-        scene_->addPolygon(polygon);
+        scene_->addPolygon(polygon, pen);
     }
+}
+
+void QtMeshDrawer::draw()
+{
+    scene_->clear();
+    scene_->setSceneRect(0, 0, view_->geometry().width(), view_->geometry().height());
+
+    drawMesh();
+    // drawMeshWireframe();
 
     view_->show();
 }
 
-void fill(QImage &image, double *z_buffer, QVector3D s1, QVector3D s2, QVector3D f1, QVector3D f2, QColor value)
-{
-    if (s1.y() == f1.y())
-        return;
-
-    int w = image.width(), h = image.height();
-
-    double delta_y = f1.y() - s1.y();
-    double dx1 = (f1.x() - s1.x()) / delta_y;
-    double dz1 = (f1.z() - s1.z()) / delta_y;
-    double dx2 = (f2.x() - s2.x()) / delta_y;
-    double dz2 = (f2.z() - s2.z()) / delta_y;
-
-    int s1yi = floor(s1.y()), f1yi = floor(f1.y());
-
-    if (s1yi < 0)
-    {
-        s1.setX(s1.x() + dx1 * (-s1yi));
-        s1.setZ(s1.z() + dz1 * (-s1yi));
-        s2.setX(s2.x() + dx2 * (-s1yi));
-        s2.setZ(s2.z() + dz2 * (-s1yi));
-        s1yi = 0;
-    }
-
-    if (f1yi > h)
-    {
-        f1yi = h;
-    }
-
-    for (int y = s1yi; y < f1yi; y++)
-    {
-        double x1 = s1.x(), x2 = s2.x();
-        double z1 = s1.z(), z2 = s2.z();
-
-        if (x1 > x2)
-        {
-            std::swap(x1, x2);
-            std::swap(z1, z2);
-        }
-
-        double delta_x = x2 - x1;
-        double dz = (z2 - z1) / delta_x;
-
-        int x1i = floor(x1), x2i = floor(x2);
-
-        if (x1i < 0)
-        {
-            z1 += dz * (-x1i);
-            x1i = 0;
-        }
-
-        if (x2i >= w)
-        {
-            x2i = w - 1;
-        }
-
-        for (int x = x1i; x <= x2i; x++)
-        {
-            if (z1 > z_buffer[y * w + x] && z1 > 0)
-            {
-                z_buffer[y * w + x] = z1;
-                image.setPixelColor(x, y, value);
-            }
-
-            z1 += dz;
-        }
-
-        s1.setX(s1.x() + dx1);
-        s1.setZ(s1.z() + dz1);
-
-        s2.setX(s2.x() + dx2);
-        s2.setZ(s2.z() + dz2);
-    }
-}
-
 void QtMeshDrawer::drawMesh()
 {
+    if (!mesh_)
+        return;
+
     color_rg_.seed(0);
     int w = view_->geometry().width();
     int h = view_->geometry().height();
 
-    QImage color_buffer(w, h, QImage::Format::Format_ARGB32_Premultiplied);
-    auto z_buffer = std::make_unique<double[]>(w * h);
-
-    color_buffer.fill(Qt::white);
+    color_buffer_.fill(Qt::white);
     for (int i = 0; i < w * h; i++)
-        z_buffer[i] = -INFINITY;
+        z_buffer_[i] = -INFINITY;
 
     double ratio = (double)w / h;
 
@@ -159,45 +117,108 @@ void QtMeshDrawer::drawMesh()
 
     for (const auto &it : mesh_->triangles())
     {
-        auto c = color(it);
-        auto p1 = transform(it.p1());
-        auto p2 = transform(it.p2());
-        auto p3 = transform(it.p3());
+        drawTriangle(it);
+        // if (p3.y() == p1.y())
+        // {
+        //     // points of triangle is on a line
+        //     // TODO: draw line or just skip it
 
-        // sort p1, p2, p3 by y
-        if (p2.y() < p1.y())
-            std::swap(p1, p2);
+        //     continue;
+        // }
+        // else
+        // {
+        //     double k = (p2.y() - p1.y()) / (p3.y() - p1.y());
+        //     auto p13 = p1 * (1 - k) + p3 * k;
 
-        if (p3.y() < p2.y())
-        {
-            std::swap(p2, p3);
-            if (p2.y() < p1.y())
-                std::swap(p2, p1);
-        }
-
-        if (p3.y() == p1.y())
-        {
-            // points of triangle is on a line
-            // TODO: draw line or just skip it
-
-            continue;
-        }
-        else
-        {
-            double k = (p2.y() - p1.y()) / (p3.y() - p1.y());
-            auto p13 = p1 * (1 - k) + p3 * k;
-
-            fill(color_buffer, &z_buffer[0], p1, p1, p13, p2, c);
-            fill(color_buffer, &z_buffer[0], p13, p2, p3, p3, c);
-        }
+        //     fill(color_buffer_, &z_buffer_[0], p1, p1, p13, p2, c);
+        //     fill(color_buffer_, &z_buffer_[0], p13, p2, p3, p3, c);
+        // }
     }
 
-    scene_->clear();
-    scene_->setSceneRect(0, 0, w, h);
+    scene_->addPixmap(QPixmap::fromImage(color_buffer_));
+}
 
-    scene_->addPixmap(QPixmap::fromImage(color_buffer));
+void QtMeshDrawer::drawTriangle(const CGCP::Triangle3Df &it)
+{
+    auto color = this->color(it);
+    auto p1 = transform(it.p1());
+    auto p2 = transform(it.p2());
+    auto p3 = transform(it.p3());
 
-    view_->show();
+    if (p1.y() == p2.y() && p2.y() == p3.y())
+        return; // ignore degenerate triangles
+
+    // sort p1, p2, p3 by y
+    if (p2.y() < p1.y())
+        std::swap(p1, p2);
+
+    if (p3.y() < p2.y())
+    {
+        std::swap(p2, p3);
+        if (p2.y() < p1.y())
+            std::swap(p2, p1);
+    }
+
+    int h = color_buffer_.height();
+    int w = color_buffer_.width();
+
+    int y1 = floor(p1.y()), y2 = floor(p3.y());
+
+    double total_height = p3.y() - p1.y();
+    double h1 = p2.y() - p1.y();
+    double h2 = p3.y() - p2.y();
+
+    if (y1 < 0)
+    {
+        y1 = 0;
+    }
+
+    if (y2 > h)
+    {
+        y2 = h;
+    }
+
+    for (int y = y1; y < y2; y++)
+    {
+        bool is_second_half = y > floor(p2.y()) || p1.y() == p2.y();
+        double segment_height = is_second_half ? h2 : h1;
+
+        double alpha = (y - floor(p1.y())) / total_height;
+        double beta = (y - floor(is_second_half ? p2.y() : p1.y())) / segment_height;
+
+        alpha = clamp<double>(alpha, 0, 1);
+        beta = clamp<double>(beta, 0, 1);
+
+        QVector3D A = p1 + (p3 - p1) * alpha;
+        QVector3D B = is_second_half ? p2 + (p3 - p2) * beta : p1 + (p2 - p1) * beta;
+
+        if (A.x() > B.x())
+            std::swap(A, B);
+
+        int x1 = floor(A.x()), x2 = floor(B.x());
+        double z = A.z(), dz = (B.z() - A.z()) / (x2 - x1 + 1);
+
+        if (x1 < 0)
+        {
+            z += dz * (-x1);
+            x1 = 0;
+        }
+
+        if (x2 >= w)
+        {
+            x2 = w - 1;
+        }
+
+        for (int x = x1; x <= x2; x++)
+        {
+            if (z > z_buffer_[y * w + x] && z > 0)
+            {
+                z_buffer_[y * w + x] = z;
+                color_buffer_.setPixelColor(x, y, color);
+            }
+            z += dz;
+        }
+    }
 }
 
 QVector3D QtMeshDrawer::transform(const CGCP::Vec3Df &p)
@@ -266,26 +287,27 @@ QColor QtMeshDrawer::color(const CGCP::Triangle3Df &t)
 
 void QtMeshDrawer::resizeEvent(QResizeEvent *event)
 {
-    drawMesh();
+    updateBuffers();
+    draw();
     QWidget::resizeEvent(event);
 }
 
 void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
 {
     rotate_.rotate(phi, axis.x(), axis.y(), axis.z());
-    drawMesh();
+    draw();
 }
 
 void QtMeshDrawer::translate(const CGCP::Vec3Df &offset)
 {
     translate_ = Vec3Df2QVector3D(offset);
-    drawMesh();
+    draw();
 }
 
 void QtMeshDrawer::scale(const CGCP::Vec3Df &scale)
 {
     scale_ = Vec3Df2QVector3D(scale);
-    drawMesh();
+    draw();
 }
 
 QtMeshDrawer::~QtMeshDrawer()
