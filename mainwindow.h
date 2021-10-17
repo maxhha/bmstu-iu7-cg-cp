@@ -3,6 +3,7 @@
 
 #include "src/Engine.h"
 #include <QMainWindow>
+#include <QProgressDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -19,6 +20,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void polygonizer_progress(double percent);
+
 private slots:
     void on_buttonTranslate_clicked();
 
@@ -26,11 +30,14 @@ private slots:
 
     void on_buttonRotate_clicked();
 
+    void handle_polygonizer_progress(double percent);
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<CGCP::Engine> engine_;
+    QProgressDialog *dialog_;
 };
 #endif // MAINWINDOW_H

@@ -1,4 +1,5 @@
 #include "DMCPolygonizer.h"
+#include <QDebug>
 #include <chrono>
 #include <functional>
 
@@ -27,10 +28,13 @@ namespace CGCP
         for (int i = 0; i < 10; i++)
         {
             progress(result, (double)i / 10);
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
             if (cancelled_)
+            {
+                finished_ = true;
                 return;
+            }
         }
 
         CGCP::Vec3Df v0(-5, -5, -5);

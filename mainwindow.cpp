@@ -8,30 +8,60 @@
 #include <QPolygonF>
 #include <QResizeEvent>
 #include <math.h>
+#include <type_traits>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
+    QObject::connect(
+        this,
+        &MainWindow::polygonizer_progress,
+        this,
+        &MainWindow::handle_polygonizer_progress);
+
     auto view = ui->graphicsView;
     engine_ = std::make_unique<QtEngine>(view);
 
-    engine_->polygonizer().get("dmc").run([=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
-                                          {
-                                              qDebug() << "percent =" << percent;
-                                              if (mesh)
-                                              {
-                                                  qDebug() << "done!";
-                                              }
-                                          });
+    dialog_ = new QProgressDialog("Полигонизация...", "Отменить", 0, 100, this);
+    dialog_->setWindowModality(Qt::WindowModal);
 
-    // engine_->drawer().get("main").setMesh(mesh);
+    dialog_->show();
+
+    engine_->polygonizer()
+        .get("dmc")
+        .run(
+            [=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+            {
+                if (dialog_->wasCanceled())
+                {
+                    engine_->polygonizer().get("dmc").cancel();
+                    return;
+                }
+
+                emit polygonizer_progress(percent);
+
+                if (mesh)
+                {
+                    engine_->drawer().get("main").setMesh(mesh);
+                }
+            });
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::handle_polygonizer_progress(double percent)
+{
+    dialog_->setValue(percent * 100);
+
+    if (percent >= 1 - std::numeric_limits<double>::epsilon())
+    {
+        dialog_->close();
+    }
 }
 
 void MainWindow::on_buttonTranslate_clicked()
