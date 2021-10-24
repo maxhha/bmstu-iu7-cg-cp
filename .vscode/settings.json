@@ -73,7 +73,9 @@
     "__threading_support": "cpp",
     "__tuple": "cpp",
     "ios": "cpp",
-    "locale": "cpp"
+    "locale": "cpp",
+    "random": "cpp",
+    "any": "cpp"
   },
   "cmake.configureOnOpen": false,
   "cSpell.words": [
@@ -83,6 +85,8 @@
     "Drawer",
     "Modality",
     "PERSPECTIVE",
-    "Polygonizer"
+    "Polygonizer",
+    "stoi",
+    "stoull"
   ]
 }

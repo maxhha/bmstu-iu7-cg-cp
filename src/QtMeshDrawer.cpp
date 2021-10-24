@@ -34,7 +34,7 @@ QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), sc
     view_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     updateBuffers();
-    translate(CGCP::Vec3Df(0, 0, -20));
+    translate(CGCP::Vec3Df(0, 0, -60));
 };
 
 void QtMeshDrawer::updateBuffers()
@@ -186,7 +186,7 @@ void QtMeshDrawer::drawTriangle(QImage &c_buf, double *z_buf, const CGCP::Triang
 
         for (int x = x1; x <= x2; x++)
         {
-            if (z > z_buf[y * w + x] && z > 0)
+            if (z > z_buf[y * w + x] && z < 0)
             {
                 z_buf[y * w + x] = z;
                 c_buf.setPixelColor(x, y, color);
@@ -204,13 +204,24 @@ QVector3D QtMeshDrawer::transform(const CGCP::Vec3Df &p)
     QVector3D window_scale(w, h, 1);
     QVector3D center(w / 2, h / 2, 0);
 
-    auto v = transformMesh(p);
+    // auto v = transformMesh(p);
+
+    // v = projection_.map(v);
+    // v *= window_scale;
+    // v += center;
+
+    auto v = QVector4D(transformMesh(p), 1);
 
     v = projection_.map(v);
+
+    v.setX(v.x() / v.w());
+    v.setY(v.y() / v.w());
+    v.setZ(v.w());
+
     v *= window_scale;
     v += center;
 
-    return v;
+    return QVector3D(v.x(), v.y(), v.z());
 }
 
 QVector3D QtMeshDrawer::transformMesh(const CGCP::Vec3Df &p)
@@ -242,10 +253,10 @@ QColor QtMeshDrawer::color(const CGCP::Triangle3Df &t)
     normal += r;
     normal.normalize();
 
-    if (QVector3D::dotProduct(normal, transformMesh(mesh_->origin()) - p1) > 0)
-    {
-        normal = -normal;
-    }
+    // if (QVector3D::dotProduct(normal, transformMesh(mesh_->origin()) - p1) > 0)
+    // {
+    //     normal = -normal;
+    // }
 
     double c = QVector3D::dotProduct(normal, light_direction);
 
@@ -269,7 +280,10 @@ void QtMeshDrawer::resizeEvent(QResizeEvent *event)
 
 void QtMeshDrawer::rotate(const CGCP::Vec3Df &axis, double phi)
 {
-    rotate_.rotate(phi, axis.x(), axis.y(), axis.z());
+    QMatrix4x4 m;
+    m.setToIdentity();
+    m.rotate(phi, axis.x(), axis.y(), axis.z());
+    rotate_ = m * rotate_;
     draw();
 }
 

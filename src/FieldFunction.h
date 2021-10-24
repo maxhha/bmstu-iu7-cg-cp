@@ -8,7 +8,7 @@ namespace CGCP
 {
     class FieldFunction : public ContinuesFunction
     {
-        using Function = std::function<double(Vec3Df)>;
+        using Function = std::function<double(double, double, double)>;
 
     private:
         Function f_;
@@ -19,7 +19,7 @@ namespace CGCP
 
         virtual double operator()(const Vec3Df &position) const override
         {
-            return f_(position);
+            return f_(position.x(), position.y(), position.z());
         }
 
         virtual ~FieldFunction() override = default;

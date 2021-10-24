@@ -1,10 +1,12 @@
 #include "mainwindow.h"
+#include "src/FieldFunction.h"
 #include "src/QtEngine.h"
 #include "src/QtMeshDrawer.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QMetaType>
 #include <QPolygonF>
 #include <QResizeEvent>
 #include <math.h>
@@ -14,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    qRegisterMetaType<std::shared_ptr<CGCP::Mesh>>("std::shared_ptr<CGCP::Mesh>");
 
     QObject::connect(
         this,
@@ -35,22 +39,26 @@ MainWindow::MainWindow(QWidget *parent)
 
     dialog_->show();
 
+    auto f = [](double x, double y, double z) -> double
+    {
+        return x * 0.2 - y * 0.8 + z * .1;
+    };
+
+    CGCP::AABB domain(-10, -10, -10, 10, 10, 10);
+
+    std::unique_ptr<CGCP::ContinuesFunction>
+        ff = std::make_unique<CGCP::FieldFunction>(f, domain);
+
+    engine_->polygonizer()
+        .get("dmc")
+        .function(ff);
+
     engine_->polygonizer()
         .get("dmc")
         .run(
             [=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
             {
-                if (dialog_->wasCanceled())
-                {
-                    return;
-                }
-
-                emit polygonizer_progress(percent);
-
-                if (mesh)
-                {
-                    engine_->drawer().get("main").setMesh(mesh);
-                }
+                emit polygonizer_progress(mesh, percent);
             });
 }
 
@@ -59,13 +67,23 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::handle_polygonizer_progress(double percent)
+void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent)
 {
+    if (dialog_->wasCanceled())
+    {
+        return;
+    }
+
     dialog_->setValue(percent * 100);
 
     if (percent >= 1 - std::numeric_limits<double>::epsilon())
     {
         dialog_->close();
+    }
+
+    if (mesh)
+    {
+        engine_->drawer().get("main").setMesh(mesh);
     }
 }
 
@@ -80,7 +98,7 @@ void MainWindow::on_buttonTranslate_clicked()
     double y = ui->inputTranslateY->value();
     double z = ui->inputTranslateZ->value();
 
-    engine_->drawer().get("main").translate(CGCP::Vec3Df(x, y, z));
+    engine_->drawer().get("main").translate(CGCP::Vec3Df(x, y, -z));
 }
 
 void MainWindow::on_buttonScale_clicked()

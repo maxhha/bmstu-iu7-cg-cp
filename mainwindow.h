@@ -21,7 +21,7 @@ public:
     ~MainWindow();
 
 signals:
-    void polygonizer_progress(double percent);
+    void polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
 
 private slots:
     void on_buttonTranslate_clicked();
@@ -30,7 +30,7 @@ private slots:
 
     void on_buttonRotate_clicked();
 
-    void handle_polygonizer_progress(double percent);
+    void handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
 
     void handle_cancel_polygonizer();
 
