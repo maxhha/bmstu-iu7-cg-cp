@@ -32,6 +32,8 @@ private slots:
 
     void handle_polygonizer_progress(double percent);
 
+    void handle_cancel_polygonizer();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
 

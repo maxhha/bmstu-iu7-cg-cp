@@ -27,6 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
     dialog_ = new QProgressDialog("Полигонизация...", "Отменить", 0, 100, this);
     dialog_->setWindowModality(Qt::WindowModal);
 
+    QObject::connect(
+        dialog_,
+        &QProgressDialog::canceled,
+        this,
+        &MainWindow::handle_cancel_polygonizer);
+
     dialog_->show();
 
     engine_->polygonizer()
@@ -36,7 +42,6 @@ MainWindow::MainWindow(QWidget *parent)
             {
                 if (dialog_->wasCanceled())
                 {
-                    engine_->polygonizer().get("dmc").cancel();
                     return;
                 }
 
@@ -62,6 +67,11 @@ void MainWindow::handle_polygonizer_progress(double percent)
     {
         dialog_->close();
     }
+}
+
+void MainWindow::handle_cancel_polygonizer()
+{
+    engine_->polygonizer().get("dmc").cancel();
 }
 
 void MainWindow::on_buttonTranslate_clicked()
