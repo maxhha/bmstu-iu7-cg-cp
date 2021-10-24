@@ -1,3 +1,5 @@
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <QDebug>
 #include <chrono>
 #include <functional>
@@ -9,6 +11,7 @@
 #include "DMCPolygonizer/TreeNode.h"
 
 namespace CGCP
+
 {
     const char *DMCPolygonizer::GRID_DIM_X = "grid_dim_x";
     const char *DMCPolygonizer::GRID_DIM_Y = "grid_dim_y";
@@ -17,6 +20,8 @@ namespace CGCP
     const char *DMCPolygonizer::GRID_SIZE_Y = "grid_size_y";
     const char *DMCPolygonizer::GRID_SIZE_Z = "grid_size_z";
     const char *DMCPolygonizer::MAX_DEPTH = "max_depth";
+    const char *DMCPolygonizer::NOMINAL_WEIGHT = "nominal_weight";
+    const char *DMCPolygonizer::TOLERANCE = "tolerance";
 
     void DMCPolygonizer::validate(const Config &config){};
 
@@ -29,6 +34,10 @@ namespace CGCP
             std::stoi(config_[GRID_DIM_X]),
             std::stoi(config_[GRID_DIM_Y]),
             std::stoi(config_[GRID_DIM_Z]));
+
+        max_depth_ = std::stod(config_[MAX_DEPTH]);
+        tolerance_ = std::stod(config_[TOLERANCE]);
+        nominal_weight_ = std::stod(config_[NOMINAL_WEIGHT]);
 
         std::size_t total_size = (std::size_t)dim.x() * dim.y() * dim.z();
 
@@ -46,7 +55,7 @@ namespace CGCP
         std::size_t progress = 0;
         std::size_t total_progress = total_size + 1;
 
-        // #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
         for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(total_size); ++i)
         {
             if (isCancelled())
@@ -65,7 +74,7 @@ namespace CGCP
 
             // std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-            // #pragma omp critical
+#pragma omp critical
             {
                 progress_receiver(result, (double)(++progress) / total_progress);
             }
@@ -177,8 +186,102 @@ namespace CGCP
         finished();
     };
 
-    std::shared_ptr<TreeNode> DMCPolygonizer::generateTree(const Vec3Df &from, const Vec3Df &to, std::size_t depth)
+    std::shared_ptr<TreeNode> DMCPolygonizer::generateTree(const Vec3Df &minimum, const Vec3Df &maximum, int depth)
     {
-        return std::make_shared<LeafTreeNode>((from + to) / Vec3Df(2, 2, 2), (to - from) / Vec3Df(2, 2, 2));
+        std::array<Vec3Df, 8> points = {{
+            {minimum.x(), minimum.y(), minimum.z()},
+            {maximum.x(), minimum.y(), minimum.z()},
+            {minimum.x(), maximum.y(), minimum.z()},
+            {maximum.x(), maximum.y(), minimum.z()},
+            {minimum.x(), minimum.y(), maximum.z()},
+            {maximum.x(), minimum.y(), maximum.z()},
+            {minimum.x(), maximum.y(), maximum.z()},
+            {maximum.x(), maximum.y(), maximum.z()},
+        }};
+
+        std::array<Vec3Df, 8> grads;
+        std::array<double, 8> values;
+
+        std::transform(
+            points.begin(),
+            points.end(),
+            grads.begin(),
+            [&](const auto &p)
+            { return function_->grad(p); });
+
+        std::transform(
+            points.begin(),
+            points.end(),
+            values.begin(),
+            [&](const auto &p)
+            { return (*function_)(p); });
+
+        Eigen::Matrix<double, 11, 4> a;
+
+        for (int i = 0; i < 8; ++i)
+        {
+            a(i, 0) = grads[i].x();
+            a(i, 1) = grads[i].y();
+            a(i, 2) = grads[i].z();
+            a(i, 3) = -1.0;
+        }
+
+        a(8, 0) = nominal_weight_;
+        a(8, 1) = 0.0;
+        a(8, 2) = 0.0;
+        a(8, 3) = 0.0;
+        a(9, 0) = 0.0;
+        a(9, 1) = nominal_weight_;
+        a(9, 2) = 0.0;
+        a(9, 3) = 0.0;
+        a(10, 0) = 0.0;
+        a(10, 1) = 0.0;
+        a(10, 2) = nominal_weight_;
+        a(10, 3) = 0.0;
+
+        Eigen::Matrix<double, 11, 1> b;
+
+        auto medium = (minimum + maximum) / 2;
+
+        for (int i = 0; i < 8; ++i)
+            b(i) = grads[i].dot(points[i] - medium) - values[i];
+
+        b(8) = 0.0;
+        b(9) = 0.0;
+        b(10) = 0.0;
+
+        Eigen::Matrix<double, 4, 1> x = a.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV).solve(b);
+
+        auto center = Vec3Df(x(0), x(1), x(2)) + medium;
+        auto offset = (*function_)(center);
+
+        double error = 0;
+        for (int i = 0; i < 8; ++i)
+        {
+            double error_i = offset - values[i] - grads[i].dot(center - points[i]);
+            error += error_i * error_i;
+        }
+
+        // qDebug() << "error" << error;
+
+        if (depth >= max_depth_ || error < tolerance_ * tolerance_)
+        {
+            return std::make_shared<LeafTreeNode>(center, (maximum - minimum) / Vec3Df(2, 2, 2));
+        }
+        else
+        {
+            std::array<std::shared_ptr<TreeNode>, 8> nodes({
+                generateTree(Vec3Df(minimum.x(), minimum.y(), minimum.z()), Vec3Df(medium.x(), medium.y(), medium.z()), depth + 1),
+                generateTree(Vec3Df(medium.x(), minimum.y(), minimum.z()), Vec3Df(maximum.x(), medium.y(), medium.z()), depth + 1),
+                generateTree(Vec3Df(minimum.x(), medium.y(), minimum.z()), Vec3Df(medium.x(), maximum.y(), medium.z()), depth + 1),
+                generateTree(Vec3Df(medium.x(), medium.y(), minimum.z()), Vec3Df(maximum.x(), maximum.y(), medium.z()), depth + 1),
+                generateTree(Vec3Df(minimum.x(), minimum.y(), medium.z()), Vec3Df(medium.x(), medium.y(), maximum.z()), depth + 1),
+                generateTree(Vec3Df(medium.x(), minimum.y(), medium.z()), Vec3Df(maximum.x(), medium.y(), maximum.z()), depth + 1),
+                generateTree(Vec3Df(minimum.x(), medium.y(), medium.z()), Vec3Df(medium.x(), maximum.y(), maximum.z()), depth + 1),
+                generateTree(Vec3Df(medium.x(), medium.y(), medium.z()), Vec3Df(maximum.x(), maximum.y(), maximum.z()), depth + 1),
+            });
+
+            return std::make_shared<BranchTreeNode>(nodes);
+        }
     };
 } // namespace CGCP

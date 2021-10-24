@@ -51,6 +51,13 @@ namespace CGCP
         };
 
         template <typename B>
+        Vec3D<T> operator/(B s) const
+        {
+            Vec3D<T> v(x_ / s, y_ / s, z_ / s);
+            return v;
+        };
+
+        template <typename B>
         explicit operator Vec3D<B>()
         {
             Vec3D<B> v((B)x_, (B)y_, (B)z_);
@@ -74,6 +81,12 @@ namespace CGCP
                 y_ * (1 - alpha.y()) + other.y() * alpha.y(),
                 z_ * (1 - alpha.z()) + other.z() * alpha.z());
             return v;
+        }
+
+        template <typename B>
+        T dot(const Vec3D<B> &other)
+        {
+            return x_ * other.x() + y_ * other.y() + z_ * other.z();
         }
 
         ~Vec3D() = default;

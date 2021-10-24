@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto f = [](double x, double y, double z) -> double
     {
-        return x * 0.2 - y * 0.8 + z * .1;
+        return sin(x) * cos(y);
     };
 
     CGCP::AABB domain(-10, -10, -10, 10, 10, 10);
@@ -83,6 +83,7 @@ void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, d
 
     if (mesh)
     {
+        qDebug() << "triangles:" << mesh->triangles().size();
         engine_->drawer().get("main").setMesh(mesh);
     }
 }

@@ -8,12 +8,24 @@ CONFIG += c++17
 # In order to do so, uncomment the following line.
 # DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-SOURCES += $$files("*.cpp", true)
+SOURCES += $$files("src/*.cpp", true)
+SOURCES += \
+    main.cpp \
+    mainwindow.cpp
 
-HEADERS += $$files("*.h", true)
+HEADERS += $$files("src/*.h", true)
+HEADERS += \
+    mainwindow.h
 
 FORMS += \
     mainwindow.ui
+
+INCLUDEPATH += \
+    lib/fmt/include \
+    lib/eigen
+
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS += -fopenmp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
