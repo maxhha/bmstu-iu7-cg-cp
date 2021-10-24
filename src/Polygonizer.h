@@ -1,10 +1,12 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "ContinuesFunction.h"
 #include "Mesh.h"
@@ -13,6 +15,11 @@ namespace CGCP
 {
     class Polygonizer
     {
+    private:
+        std::atomic_bool cancelled_ = false;
+        std::atomic_bool finished_ = true;
+        pthread_t run_thread_;
+
     protected:
         using Config = std::map<std::string, std::string>;
         using Function = std::unique_ptr<ContinuesFunction>;
@@ -22,6 +29,10 @@ namespace CGCP
         Function function_;
 
         virtual void validate(const Config &config) = 0;
+        virtual void threadRun(ProgressCallback progress) = 0;
+
+        bool isCancelled() { return cancelled_; };
+        void finished() { finished_ = true; };
 
     public:
         explicit Polygonizer(std::initializer_list<std::pair<const std::string, std::string>> config) : config_(config){};
@@ -35,15 +46,15 @@ namespace CGCP
         }
 
         const Function &function() const { return function_; };
-        virtual Polygonizer &function(Function &function)
+        Polygonizer &function(Function &function)
         {
             function_ = std::move(function);
             return *this;
         };
 
-        virtual void run(ProgressCallback progress) = 0;
-        virtual void cancel() = 0;
+        void run(ProgressCallback progress);
+        void cancel();
 
-        virtual ~Polygonizer() = default;
+        virtual ~Polygonizer();
     };
 } // namespace CGCP

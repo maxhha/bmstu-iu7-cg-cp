@@ -36,7 +36,47 @@ namespace CGCP
             return v;
         };
 
-        ~Vec3D(){};
+        template <typename B>
+        Vec3D<T> operator*(const Vec3D<B> &other) const
+        {
+            Vec3D<T> v(x_ * other.x(), y_ * other.y(), z_ * other.z());
+            return v;
+        };
+
+        template <typename B>
+        Vec3D<T> operator/(const Vec3D<B> &other) const
+        {
+            Vec3D<T> v(x_ / other.x(), y_ / other.y(), z_ / other.z());
+            return v;
+        };
+
+        template <typename B>
+        explicit operator Vec3D<B>()
+        {
+            Vec3D<B> v((B)x_, (B)y_, (B)z_);
+            return v;
+        };
+
+        template <typename B>
+        Vec3D<T> &operator=(const Vec3D<B> &other)
+        {
+            x_ = other.x_;
+            y_ = other.y_;
+            z_ = other.z_;
+            return *this;
+        }
+
+        template <typename B>
+        Vec3D<T> mix(const Vec3D<T> &other, const Vec3D<B> &alpha) const
+        {
+            Vec3D<T> v(
+                x_ * (1 - alpha.x()) + other.x() * alpha.x(),
+                y_ * (1 - alpha.y()) + other.y() * alpha.y(),
+                z_ * (1 - alpha.z()) + other.z() * alpha.z());
+            return v;
+        }
+
+        ~Vec3D() = default;
     };
 
     using Vec3Df = Vec3D<double>;
