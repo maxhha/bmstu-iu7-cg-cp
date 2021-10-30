@@ -12,6 +12,7 @@ namespace CGCP
 
     public:
         Vec3D(){};
+        explicit Vec3D(T v) : x_(v), y_(v), z_(v){};
         Vec3D(T x, T y, T z) : x_(x), y_(y), z_(z){};
 
         T &x() { return x_; };
@@ -80,6 +81,16 @@ namespace CGCP
                 x_ * (1 - alpha.x()) + other.x() * alpha.x(),
                 y_ * (1 - alpha.y()) + other.y() * alpha.y(),
                 z_ * (1 - alpha.z()) + other.z() * alpha.z());
+            return v;
+        }
+
+        template <typename B>
+        Vec3D<T> mix(const Vec3D<T> &other, const B &alpha) const
+        {
+            Vec3D<T> v(
+                x_ * (1 - alpha) + other.x() * alpha,
+                y_ * (1 - alpha) + other.y() * alpha,
+                z_ * (1 - alpha) + other.z() * alpha);
             return v;
         }
 

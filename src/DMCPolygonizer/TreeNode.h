@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Vec3D.h"
+#include "FieldVertex.h"
 #include <array>
 #include <memory>
 
@@ -16,7 +17,8 @@ namespace CGCP
     class BranchTreeNode : public TreeNode
     {
     private:
-        using Children = std::array<std::shared_ptr<TreeNode>, 8>;
+        using TreeNodePtr = std::shared_ptr<TreeNode>;
+        using Children = std::array<TreeNodePtr, 8>;
         Children children_;
 
     public:
@@ -31,30 +33,36 @@ namespace CGCP
         Children &children() { return children_; };
         const Children &children() const { return children_; };
 
+        TreeNodePtr xyz() { return children_[0]; };
+        TreeNodePtr Xyz() { return children_[1]; };
+        TreeNodePtr xYz() { return children_[2]; };
+        TreeNodePtr XYz() { return children_[3]; };
+        TreeNodePtr xyZ() { return children_[4]; };
+        TreeNodePtr XyZ() { return children_[5]; };
+        TreeNodePtr xYZ() { return children_[6]; };
+        TreeNodePtr XYZ() { return children_[7]; };
+
         virtual ~BranchTreeNode() override = default;
     };
 
     class LeafTreeNode : public TreeNode
     {
     private:
-        Vec3Df center_;
-        Vec3Df offset_;
+        FieldVertex vertex_;
 
     public:
-        LeafTreeNode(const Vec3Df &center, const Vec3Df &offset) : center_(center), offset_(offset){};
+        explicit LeafTreeNode(const FieldVertex &vertex) : vertex_(vertex){};
+
+        FieldVertex &vertex() { return vertex_; };
+        const FieldVertex &vertex() const { return vertex_; };
 
         LeafTreeNode &operator=(const LeafTreeNode &other)
         {
-            center_ = other.center_;
-            offset_ = other.offset_;
+            vertex_ = other.vertex_;
 
             return *this;
         };
 
-        Vec3Df &center() { return center_; };
-        const Vec3Df &center() const { return center_; };
-
-        Vec3Df &offset() { return offset_; };
-        const Vec3Df &offset() const { return offset_; };
+        virtual ~LeafTreeNode() override = default;
     };
 } // namespace CGCP

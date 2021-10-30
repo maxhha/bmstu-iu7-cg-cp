@@ -75,7 +75,17 @@
     "ios": "cpp",
     "locale": "cpp",
     "random": "cpp",
-    "any": "cpp"
+    "any": "cpp",
+    "valarray": "cpp",
+    "orderingmethods": "cpp",
+    "fft": "cpp",
+    "matrixfunctions": "cpp",
+    "polynomials": "cpp",
+    "format": "cpp",
+    "complex": "cpp",
+    "set": "cpp",
+    "unordered_set": "cpp",
+    "hash_map": "cpp"
   },
   "cmake.configureOnOpen": false,
   "cSpell.words": [
@@ -92,6 +102,7 @@
     "Polygonizer",
     "stod",
     "stoi",
-    "stoull"
+    "stoull",
+    "vertices"
   ]
 }
