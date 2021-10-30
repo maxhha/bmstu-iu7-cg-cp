@@ -146,14 +146,14 @@ void QtMeshDrawer::drawTriangle(QImage &c_buf, double *z_buf, const CGCP::Triang
     int h = c_buf.height();
     int w = c_buf.width();
 
-    int y1 = clamp<int>(floor(p1.y()), 0, h);
-    int y2 = clamp<int>(floor(p3.y()), 0, h);
+    int y1 = clamp<int>(floor(p1.y()), 0, h - 1);
+    int y2 = clamp<int>(floor(p3.y()), 0, h - 1);
 
     double total_height = p3.y() - p1.y();
     double h1 = p2.y() - p1.y();
     double h2 = p3.y() - p2.y();
 
-    for (int y = y1; y < y2; y++)
+    for (int y = y1; y <= y2; y++)
     {
         bool is_second_half = y > floor(p2.y()) || p1.y() == p2.y();
         double segment_height = is_second_half ? h2 : h1;
@@ -262,7 +262,7 @@ QColor QtMeshDrawer::color(const CGCP::Triangle3Df &t)
 
     if (c < 0)
     {
-        c = 0;
+        c = -c;
     }
 
     return QColor(

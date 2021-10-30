@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto f = [](double x, double y, double z) -> double
     {
-        return sin(x) * cos(y);
+        return x * x + y * y - z;
     };
 
     CGCP::AABB domain(-10, -10, -10, 10, 10, 10);
