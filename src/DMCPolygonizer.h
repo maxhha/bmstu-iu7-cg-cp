@@ -8,9 +8,20 @@ namespace CGCP
     class DMCPolygonizer : public Polygonizer
     {
     private:
+        using typename Polygonizer::Config;
+        using typename Polygonizer::ProgressCallback;
         using Triangles = std::vector<Triangle3Df>;
         using TreeNodePtr = std::shared_ptr<TreeNode>;
+        using TrianglesPtr = std::shared_ptr<Triangles>;
+
+        void setConfig(const Config &config);
+
+        void increaseProgress();
+
+        std::vector<TreeNodePtr> generateForest();
         std::shared_ptr<TreeNode> generateTree(const Vec3Df &from, const Vec3Df &to, int depth = 0);
+
+        TrianglesPtr enumerateTriangles(std::vector<TreeNodePtr> &children);
 
         void enumerateCell(Triangles &triangles,
                            const TreeNodePtr n);
@@ -44,23 +55,22 @@ namespace CGCP
             Triangles &triangles,
             const std::array<const FieldVertex *, 8> &verticies);
 
+        Vec3D<std::size_t> dim_;
         double nominal_weight_;
         double tolerance_;
         int max_depth_;
+        ProgressCallback progress_receiver_;
+        std::size_t progress_;
+        std::size_t total_progress_;
 
     protected:
-        using typename Polygonizer::ProgressCallback;
-
         virtual void threadRun(ProgressCallback progress) override;
-        virtual void validate(const Config &config) override;
+        virtual Polygonizer &config(const Config &config) override;
 
     public:
         static const char *GRID_DIM_X;
         static const char *GRID_DIM_Y;
         static const char *GRID_DIM_Z;
-        static const char *GRID_SIZE_X;
-        static const char *GRID_SIZE_Y;
-        static const char *GRID_SIZE_Z;
         static const char *MAX_DEPTH;
         static const char *NOMINAL_WEIGHT;
         static const char *TOLERANCE;

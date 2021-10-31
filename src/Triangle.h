@@ -13,6 +13,7 @@ namespace CGCP
         V p3_;
 
     public:
+        Triangle(){};
         Triangle(const V &p1, const V &p2, const V &p3) : p1_(p1), p2_(p2), p3_(p3){};
 
         const V &p1() const { return p1_; };

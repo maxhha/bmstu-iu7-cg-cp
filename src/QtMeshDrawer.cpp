@@ -184,7 +184,7 @@ void QtMeshDrawer::drawTriangle(QImage &c_buf, double *z_buf, const CGCP::Triang
             x2 = w - 1;
         }
 
-        for (int x = x1; x <= x2; x++)
+        for (int x = x1; x < x2; x++)
         {
             if (z > z_buf[y * w + x] && z < 0)
             {
@@ -200,7 +200,6 @@ QVector3D QtMeshDrawer::transform(const CGCP::Vec3Df &p)
 {
     double w = view_->geometry().width(), h = view_->geometry().height();
 
-    QVector3D origin = Vec3Df2QVector3D(mesh_->origin());
     QVector3D window_scale(w, h, 1);
     QVector3D center(w / 2, h / 2, 0);
 

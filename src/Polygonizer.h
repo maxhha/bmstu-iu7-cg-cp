@@ -28,25 +28,24 @@ namespace CGCP
         Config config_;
         Function function_;
 
-        virtual void validate(const Config &config) = 0;
         virtual void threadRun(ProgressCallback progress) = 0;
 
         bool isCancelled() { return cancelled_; };
         void finished() { finished_ = true; };
 
     public:
+        Polygonizer(){};
         explicit Polygonizer(std::initializer_list<std::pair<const std::string, std::string>> config) : config_(config){};
 
         const Config &config() const { return config_; };
-        Polygonizer &config(const Config &config)
+        virtual Polygonizer &config(const Config &config)
         {
-            validate(config);
             config_ = config;
             return *this;
         }
 
         const Function &function() const { return function_; };
-        Polygonizer &function(Function &function)
+        virtual Polygonizer &function(Function &function)
         {
             function_ = std::move(function);
             return *this;

@@ -68,9 +68,9 @@ namespace CGCP
         template <typename B>
         Vec3D<T> &operator=(const Vec3D<B> &other)
         {
-            x_ = other.x_;
-            y_ = other.y_;
-            z_ = other.z_;
+            x_ = other.x();
+            y_ = other.y();
+            z_ = other.z();
             return *this;
         }
 
