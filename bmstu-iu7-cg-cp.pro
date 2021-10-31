@@ -11,7 +11,9 @@ CONFIG += c++17
 SOURCES += $$files("src/*.cpp", true)
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    lib/fmt/src/format.cc \
+    lib/fmt/src/os.cc
 
 HEADERS += $$files("src/*.h", true)
 HEADERS += \

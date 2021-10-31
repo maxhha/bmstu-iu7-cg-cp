@@ -1,4 +1,4 @@
-#include "Polygonizer.h"
+#include "CFLoader.h"
 #include "Exception.h"
 #include <QDebug>
 #include <chrono>
@@ -6,27 +6,20 @@
 
 namespace CGCP
 {
-    void Polygonizer::run(ProgressCallback progress)
+    void CFLoader::load(std::string path, ProgressCallback progress)
     {
         if (!finished_)
         {
-            THROW_EXCEPTION("Polygonise not finished");
-            return;
-        }
-
-        if (function_ == nullptr)
-        {
-            THROW_EXCEPTION("Function is not set");
-            return;
+            THROW_EXCEPTION("Load not finished");
         }
 
         finished_ = false;
-        std::thread thr(threadRun, std::ref(*this), progress);
-        run_thread_ = thr.native_handle();
+        std::thread thr(threadLoad, std::ref(*this), path, progress);
+        load_thread_ = thr.native_handle();
         thr.detach();
-    };
+    }
 
-    void Polygonizer::cancel()
+    void CFLoader::cancel()
     {
         if (finished_)
             return;
@@ -41,14 +34,14 @@ namespace CGCP
 
         if (!finished_)
         {
-            pthread_cancel(run_thread_);
+            pthread_cancel(load_thread_);
             finished_ = true;
         }
 
         cancelled_ = false;
     };
 
-    Polygonizer::~Polygonizer()
+    CFLoader::~CFLoader()
     {
         cancel();
     };

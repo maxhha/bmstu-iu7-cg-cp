@@ -8,13 +8,17 @@ namespace CGCP
     class Engine
     {
     private:
+        std::unique_ptr<CFLoaderSolution> loader_;
         std::unique_ptr<DrawerSolution> drawer_;
         std::unique_ptr<PolygonizerSolution> polygonizer_;
 
     public:
-        Engine() : drawer_(std::make_unique<CGCP::DrawerSolution>()),
-                   polygonizer_(std::make_unique<CGCP::PolygonizerSolution>()){};
+        Engine()
+            : loader_(std::make_unique<CGCP::CFLoaderSolution>()),
+              drawer_(std::make_unique<CGCP::DrawerSolution>()),
+              polygonizer_(std::make_unique<CGCP::PolygonizerSolution>()){};
 
+        CFLoaderSolution &loader() { return *loader_; };
         DrawerSolution &drawer() { return *drawer_; };
         PolygonizerSolution &polygonizer() { return *polygonizer_; };
 

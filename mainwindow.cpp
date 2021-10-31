@@ -46,19 +46,31 @@ MainWindow::MainWindow(QWidget *parent)
 
     CGCP::AABB domain(-10, -10, -10, 10, 10, 10);
 
-    std::unique_ptr<CGCP::ContinuesFunction>
-        ff = std::make_unique<CGCP::FieldFunction>(f, domain);
+    // std::unique_ptr<CGCP::ContinuesFunction>
+    //     ff = std::make_unique<CGCP::FieldFunction>(f, domain);
 
-    engine_->polygonizer()
-        .get("dmc")
-        .function(ff);
-
-    engine_->polygonizer()
-        .get("dmc")
-        .run(
-            [=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+    engine_->loader()
+        .get("raw")
+        .load(
+            "blabla",
+            [=](CGCP::Error err, std::unique_ptr<CGCP::ContinuesFunction> ff, double progress) -> void
             {
-                emit polygonizer_progress(mesh, percent);
+                qDebug() << "load" << err << progress;
+
+                if (ff)
+                {
+                    engine_->polygonizer()
+                        .get("dmc")
+                        .function(ff);
+
+                    engine_->polygonizer()
+                        .get("dmc")
+                        .run(
+                            [=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+                            {
+                                emit polygonizer_progress(mesh, percent);
+                            });
+                }
             });
 }
 

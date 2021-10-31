@@ -3,7 +3,8 @@
 
 namespace CGCP
 {
-    Mesh::Mesh(std::initializer_list<Triangle3Df> items) : triangles_(std::make_shared<Triangles>())
+    Mesh::Mesh(std::initializer_list<Triangle3Df> items)
+        : triangles_(std::make_shared<Triangles>())
     {
         for (auto it : items)
         {

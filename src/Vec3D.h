@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 namespace CGCP
 {
     template <typename T>
@@ -100,9 +102,33 @@ namespace CGCP
             return x_ * other.x() + y_ * other.y() + z_ * other.z();
         }
 
+        template <typename B>
+        Vec3D<T> clamp(const Vec3D<B> &min, const Vec3D<B> &max) const
+        {
+            Vec3D<T> v(
+                x_ < min.x()
+                    ? min.x()
+                : x_ > max.x()
+                    ? max.x()
+                    : x_,
+                y_ < min.y()
+                    ? min.y()
+                : y_ > max.y()
+                    ? max.y()
+                    : y_,
+                z_ < min.z()
+                    ? min.z()
+                : z_ > max.z()
+                    ? max.z()
+                    : z_);
+
+            return v;
+        }
+
         ~Vec3D() = default;
     };
 
     using Vec3Df = Vec3D<double>;
     using Vec3Di = Vec3D<int>;
+    using Vec3Ds = Vec3D<std::size_t>;
 } // namespace CGCP

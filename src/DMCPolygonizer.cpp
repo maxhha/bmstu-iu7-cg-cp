@@ -2,6 +2,7 @@
 
 #include "DMCPolygonizer.h"
 #include "DMCPolygonizer/TreeNode.h"
+#include "Exception.h"
 
 namespace CGCP
 

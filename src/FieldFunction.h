@@ -15,7 +15,8 @@ namespace CGCP
 
     public:
         FieldFunction() = delete;
-        FieldFunction(Function f, const AABB &domain) : ContinuesFunction(domain), f_(f){};
+        FieldFunction(Function f, const AABB &domain)
+            : ContinuesFunction(domain), f_(f){};
 
         virtual double operator()(const Vec3Df &position) const override
         {

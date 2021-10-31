@@ -102,7 +102,9 @@
     "Polygonizer",
     "stod",
     "stoi",
+    "stoll",
     "stoull",
+    "Tomography",
     "vertices"
   ]
 }

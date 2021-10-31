@@ -20,7 +20,9 @@ namespace CGCP
         Mesh() : triangles_(std::make_shared<std::vector<Triangle3Df>>()){};
         explicit Mesh(TrianglesPtr triangles) : triangles_(triangles){};
         Mesh(std::initializer_list<Triangle3Df> items);
-        Mesh(TrianglesPtr triangles, const Vec3Df &origin) : triangles_(triangles), origin_(origin){};
+        Mesh(TrianglesPtr triangles, const Vec3Df &origin)
+            : triangles_(triangles),
+              origin_(origin){};
 
         const Triangles &triangles() const { return *triangles_; };
         Triangles &triangles() { return *triangles_; };

@@ -23,7 +23,8 @@ namespace CGCP
     protected:
         using Config = std::map<std::string, std::string>;
         using Function = std::unique_ptr<ContinuesFunction>;
-        using ProgressCallback = std::function<void(std::shared_ptr<Mesh> result, double percent)>;
+        using ProgressCallback = std::function<
+            void(std::shared_ptr<Mesh> result, double percent)>;
 
         Config config_;
         Function function_;
@@ -35,7 +36,11 @@ namespace CGCP
 
     public:
         Polygonizer(){};
-        explicit Polygonizer(std::initializer_list<std::pair<const std::string, std::string>> config) : config_(config){};
+        explicit Polygonizer(
+            std::initializer_list<
+                std::pair<const std::string, std::string>>
+                config)
+            : config_(config){};
 
         const Config &config() const { return config_; };
         virtual Polygonizer &config(const Config &config)
