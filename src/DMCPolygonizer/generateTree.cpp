@@ -4,7 +4,12 @@
 
 namespace CGCP
 {
-    std::shared_ptr<TreeNode> DMCPolygonizer::generateTree(const Vec3Df &minimum, const Vec3Df &maximum, int depth)
+    std::shared_ptr<TreeNode> DMCPolygonizer::generateTree(
+        ObjectPool<LeafTreeNode> &leafs,
+        ObjectPool<BranchTreeNode> &branches,
+        const Vec3Df &minimum,
+        const Vec3Df &maximum,
+        int depth)
     {
         std::array<Vec3Df, 8> points = {{
             {minimum.x(), minimum.y(), minimum.z()},
@@ -82,22 +87,46 @@ namespace CGCP
 
         if (depth >= max_depth_ || error < tolerance_ * tolerance_)
         {
-            return std::make_shared<LeafTreeNode>(FieldVertex(center, offset));
+            return leafs.store(LeafTreeNode(FieldVertex(center, offset)));
         }
         else
         {
             std::array<std::shared_ptr<TreeNode>, 8> nodes({
-                generateTree(Vec3Df(minimum.x(), minimum.y(), minimum.z()), Vec3Df(medium.x(), medium.y(), medium.z()), depth + 1),
-                generateTree(Vec3Df(medium.x(), minimum.y(), minimum.z()), Vec3Df(maximum.x(), medium.y(), medium.z()), depth + 1),
-                generateTree(Vec3Df(minimum.x(), medium.y(), minimum.z()), Vec3Df(medium.x(), maximum.y(), medium.z()), depth + 1),
-                generateTree(Vec3Df(medium.x(), medium.y(), minimum.z()), Vec3Df(maximum.x(), maximum.y(), medium.z()), depth + 1),
-                generateTree(Vec3Df(minimum.x(), minimum.y(), medium.z()), Vec3Df(medium.x(), medium.y(), maximum.z()), depth + 1),
-                generateTree(Vec3Df(medium.x(), minimum.y(), medium.z()), Vec3Df(maximum.x(), medium.y(), maximum.z()), depth + 1),
-                generateTree(Vec3Df(minimum.x(), medium.y(), medium.z()), Vec3Df(medium.x(), maximum.y(), maximum.z()), depth + 1),
-                generateTree(Vec3Df(medium.x(), medium.y(), medium.z()), Vec3Df(maximum.x(), maximum.y(), maximum.z()), depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(minimum.x(), minimum.y(), minimum.z()),
+                             Vec3Df(medium.x(), medium.y(), medium.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(medium.x(), minimum.y(), minimum.z()),
+                             Vec3Df(maximum.x(), medium.y(), medium.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(minimum.x(), medium.y(), minimum.z()),
+                             Vec3Df(medium.x(), maximum.y(), medium.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(medium.x(), medium.y(), minimum.z()),
+                             Vec3Df(maximum.x(), maximum.y(), medium.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(minimum.x(), minimum.y(), medium.z()),
+                             Vec3Df(medium.x(), medium.y(), maximum.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(medium.x(), minimum.y(), medium.z()),
+                             Vec3Df(maximum.x(), medium.y(), maximum.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(minimum.x(), medium.y(), medium.z()),
+                             Vec3Df(medium.x(), maximum.y(), maximum.z()),
+                             depth + 1),
+                generateTree(leafs, branches,
+                             Vec3Df(medium.x(), medium.y(), medium.z()),
+                             Vec3Df(maximum.x(), maximum.y(), maximum.z()),
+                             depth + 1),
             });
 
-            return std::make_shared<BranchTreeNode>(nodes);
+            return branches.store(BranchTreeNode(nodes));
         }
     };
 } // namespace CGCP

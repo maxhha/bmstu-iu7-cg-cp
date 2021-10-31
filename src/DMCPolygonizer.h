@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DMCPolygonizer/ObjectPool.h"
 #include "DMCPolygonizer/TreeNode.h"
 #include "Polygonizer.h"
 
@@ -19,7 +20,12 @@ namespace CGCP
         void increaseProgress();
 
         std::vector<TreeNodePtr> generateForest();
-        std::shared_ptr<TreeNode> generateTree(const Vec3Df &from, const Vec3Df &to, int depth = 0);
+        std::shared_ptr<TreeNode> generateTree(
+            ObjectPool<LeafTreeNode> &leafs,
+            ObjectPool<BranchTreeNode> &branches,
+            const Vec3Df &from,
+            const Vec3Df &to,
+            int depth = 0);
 
         TrianglesPtr enumerateTriangles(std::vector<TreeNodePtr> &children);
 
@@ -64,7 +70,8 @@ namespace CGCP
         std::size_t total_progress_;
 
     protected:
-        virtual void threadRun(ProgressCallback progress) override;
+        virtual void
+        threadRun(ProgressCallback progress) override;
         virtual Polygonizer &config(const Config &config) override;
 
     public:

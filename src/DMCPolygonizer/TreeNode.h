@@ -22,6 +22,7 @@ namespace CGCP
         Children children_;
 
     public:
+        BranchTreeNode(){};
         explicit BranchTreeNode(const Children &children) : children_(children){};
 
         BranchTreeNode &operator=(const BranchTreeNode &other)
@@ -51,6 +52,7 @@ namespace CGCP
         FieldVertex vertex_;
 
     public:
+        LeafTreeNode(){};
         explicit LeafTreeNode(const FieldVertex &vertex) : vertex_(vertex){};
 
         FieldVertex &vertex() { return vertex_; };

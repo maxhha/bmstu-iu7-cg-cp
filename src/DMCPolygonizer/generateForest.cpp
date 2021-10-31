@@ -19,6 +19,9 @@ namespace CGCP
         std::mt19937 gen;
         std::shuffle(indices.begin(), indices.end(), gen);
 
+        std::vector<ObjectPool<LeafTreeNode>> leafs(omp_get_max_threads());
+        std::vector<ObjectPool<BranchTreeNode>> branches(omp_get_max_threads());
+
 #pragma omp parallel for schedule(dynamic)
         for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(total_size); ++i)
         {
@@ -34,7 +37,11 @@ namespace CGCP
             auto from = function_->domain().mix(v / dim_);
             auto to = function_->domain().mix((v + Vec3Df(1)) / dim_);
 
-            children[j] = generateTree(from, to);
+            children[j] = generateTree(
+                leafs[omp_get_thread_num()],
+                branches[omp_get_thread_num()],
+                from,
+                to);
 
 #pragma omp critical
             {

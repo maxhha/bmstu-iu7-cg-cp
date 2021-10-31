@@ -11,6 +11,7 @@ namespace CGCP
         double offset_;
 
     public:
+        FieldVertex(){};
         FieldVertex(const Vec3Df &position, double offset) : position_(position), offset_(offset){};
 
         Vec3Df &position() { return position_; };
