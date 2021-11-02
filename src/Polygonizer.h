@@ -22,7 +22,7 @@ namespace CGCP
 
     protected:
         using Config = std::map<std::string, std::string>;
-        using Function = std::unique_ptr<ContinuesFunction>;
+        using Function = std::shared_ptr<ContinuesFunction>;
         using ProgressCallback = std::function<
             void(std::shared_ptr<Mesh> result, double percent)>;
 

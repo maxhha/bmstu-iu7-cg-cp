@@ -17,9 +17,9 @@ namespace CGCP
     DMCPolygonizer::DMCPolygonizer()
     {
         setConfig({
-            {GRID_DIM_X, "5"},
-            {GRID_DIM_Y, "5"},
-            {GRID_DIM_Z, "5"},
+            {GRID_DIM_X, "20"},
+            {GRID_DIM_Y, "20"},
+            {GRID_DIM_Z, "20"},
             {MAX_DEPTH, "4"},
             {NOMINAL_WEIGHT, "0.1"},
             {TOLERANCE, "0.1"},

@@ -31,7 +31,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="view">
        <attribute name="title">
@@ -253,6 +253,20 @@
          <widget class="QPushButton" name="buttonRotate">
           <property name="text">
            <string>Поворот</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="load">
+       <attribute name="title">
+        <string>Файл</string>
+       </attribute>
+       <layout class="QFormLayout" name="formLayout_3">
+        <item row="0" column="0" colspan="2">
+         <widget class="QPushButton" name="buttonOpen">
+          <property name="text">
+           <string>Открыть файл</string>
           </property>
          </widget>
         </item>

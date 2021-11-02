@@ -23,6 +23,8 @@ public:
 signals:
     void polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
 
+    void loader_progress(CGCP::Error err, std::shared_ptr<CGCP::ContinuesFunction> f, double percent);
+
 private slots:
     void on_buttonTranslate_clicked();
 
@@ -32,7 +34,13 @@ private slots:
 
     void handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
 
+    void handle_loader_progress(CGCP::Error err, std::shared_ptr<CGCP::ContinuesFunction> f, double percent);
+
     void handle_cancel_polygonizer();
+
+    void handle_cancel_loader();
+
+    void on_buttonOpen_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -40,6 +48,7 @@ protected:
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<CGCP::Engine> engine_;
-    QProgressDialog *dialog_;
+    QProgressDialog *polygonizer_dialog_;
+    QProgressDialog *loader_dialog_;
 };
 #endif // MAINWINDOW_H
