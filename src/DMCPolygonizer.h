@@ -72,7 +72,7 @@ namespace CGCP
     protected:
         virtual void
         threadRun(ProgressCallback progress) override;
-        virtual Polygonizer &config(const Config &config) override;
+        virtual Config config(const Config &config) override;
 
     public:
         static const char *GRID_DIM_X;

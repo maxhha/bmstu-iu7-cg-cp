@@ -2,6 +2,7 @@
 #include "src/FieldFunction.h"
 #include "src/QtEngine.h"
 #include "src/QtMeshDrawer.h"
+#include "src/TIFunction.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QFileDialog>
@@ -19,8 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    qRegisterMetaType<std::shared_ptr<CGCP::Mesh>>("std::shared_ptr<CGCP::Mesh>");
-    qRegisterMetaType<std::shared_ptr<CGCP::ContinuesFunction>>("std::shared_ptr<CGCP::ContinuesFunction>");
+    qRegisterMetaType<MeshPtr>("MeshPtr");
+    qRegisterMetaType<FunctionPtr>("FunctionPtr");
     qRegisterMetaType<CGCP::Error>("CGCP::Error");
 
     QObject::connect(
@@ -159,7 +160,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::on_buttonOpen_clicked()
 {
-    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/TeddyBear/Teddybear.dat"); //
+    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/TeddyBear/Teddybear.dat");
     QString filename = QFileDialog::getOpenFileName(this);
 
     engine_->loader()
@@ -204,30 +205,80 @@ void MainWindow::handle_loader_progress(
         QMessageBox msg;
         msg.setText(messageForError(err));
         msg.exec();
+
         return;
     }
 
+    if (!f)
+    {
+        loader_dialog_->setValue(percent * 100);
+        return;
+    }
+
+    handle_loader_finish(f);
+
+    loader_dialog_->close();
+
+    // engine_->polygonizer()
+    //     .get("dmc")
+    //     .run(
+    //         [&](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+    //         {
+    //             emit polygonizer_progress(mesh, percent);
+    //         });
+
+    // polygonizer_dialog_->reset();
+    // polygonizer_dialog_->show();
+
+    return;
+}
+
+void MainWindow::handle_loader_finish(FunctionPtr f)
+{
+    QString shape_x, shape_y, shape_z;
+    double scale_x, scale_y, scale_z;
+
     if (f)
     {
-        loader_dialog_->close();
-
         engine_->polygonizer()
             .get("dmc")
             .function(f);
 
-        engine_->polygonizer()
-            .get("dmc")
-            .run(
-                [&](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
-                {
-                    emit polygonizer_progress(mesh, percent);
-                });
+        auto ti_f = std::dynamic_pointer_cast<CGCP::TIFunction>(f);
 
-        polygonizer_dialog_->reset();
-        polygonizer_dialog_->show();
+        if (!ti_f)
+        {
+            qDebug() << "unknown function type";
+        }
+        else
+        {
+            shape_x = QString::number(ti_f->scan().shape().x());
+            shape_y = QString::number(ti_f->scan().shape().y());
+            shape_z = QString::number(ti_f->scan().shape().z());
 
-        return;
+            scale_x = ti_f->scan().scale().x();
+            scale_y = ti_f->scan().scale().y();
+            scale_z = ti_f->scan().scale().z();
+        }
     }
 
-    loader_dialog_->setValue(percent * 100);
+    this->ui->labelShapeX->setText(shape_x);
+    this->ui->labelShapeY->setText(shape_y);
+    this->ui->labelShapeZ->setText(shape_z);
+
+    this->ui->labelVoxelX->setValue(scale_x);
+    this->ui->labelVoxelY->setValue(scale_y);
+    this->ui->labelVoxelZ->setValue(scale_z);
+
+    // this->ui->labelShapeX->update();
+    // this->ui->labelShapeY->update();
+    // this->ui->labelShapeZ->update();
+
+    // this->ui->labelVoxelX->update();
+    // this->ui->labelVoxelY->update();
+    // this->ui->labelVoxelZ->update();
+
+    QCoreApplication::processEvents();
+
+    // this->ui->load->update();
 }

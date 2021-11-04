@@ -19,11 +19,13 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    using FunctionPtr = std::shared_ptr<CGCP::ContinuesFunction>;
+    using MeshPtr = std::shared_ptr<CGCP::Mesh>;
 
 signals:
-    void polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
+    void polygonizer_progress(MeshPtr mesh, double percent);
 
-    void loader_progress(CGCP::Error err, std::shared_ptr<CGCP::ContinuesFunction> f, double percent);
+    void loader_progress(CGCP::Error err, FunctionPtr f, double percent);
 
 private slots:
     void on_buttonTranslate_clicked();
@@ -32,9 +34,9 @@ private slots:
 
     void on_buttonRotate_clicked();
 
-    void handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent);
+    void handle_polygonizer_progress(MeshPtr mesh, double percent);
 
-    void handle_loader_progress(CGCP::Error err, std::shared_ptr<CGCP::ContinuesFunction> f, double percent);
+    void handle_loader_progress(CGCP::Error err, FunctionPtr f, double percent);
 
     void handle_cancel_polygonizer();
 
@@ -44,6 +46,7 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void handle_loader_finish(FunctionPtr f);
 
 private:
     Ui::MainWindow *ui;

@@ -43,17 +43,19 @@ namespace CGCP
             : config_(config){};
 
         const Config &config() const { return config_; };
-        virtual Polygonizer &config(const Config &config)
+        virtual Config config(const Config &config)
         {
+            Config old = config_;
             config_ = config;
-            return *this;
+            return old;
         }
 
         const Function &function() const { return function_; };
-        virtual Polygonizer &function(Function &function)
+        virtual Function function(Function &function)
         {
-            function_ = std::move(function);
-            return *this;
+            Function old = function_;
+            function_ = function;
+            return old;
         };
 
         void run(ProgressCallback progress);

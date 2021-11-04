@@ -46,10 +46,11 @@ namespace CGCP
         config_ = config;
     }
 
-    Polygonizer &DMCPolygonizer::config(const Config &config)
+    DMCPolygonizer::Config DMCPolygonizer::config(const Config &config)
     {
+        Config old = config_;
         setConfig(config);
-        return *this;
+        return old;
     }
 
     void DMCPolygonizer::threadRun(ProgressCallback progress_receiver)
