@@ -15,10 +15,16 @@ namespace CGCP
         Exception(std::string file, int line, std::string msg);
         virtual const char *what() const noexcept override;
 
+        const std::string &message() const noexcept
+        {
+            return message_;
+        };
+
         virtual ~Exception(){};
 
     protected:
-        std::string message;
+        std::string message_;
+        std::string what_message_;
     };
 
     using ExceptionPtr = std::unique_ptr<Exception>;

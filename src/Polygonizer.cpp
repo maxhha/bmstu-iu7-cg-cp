@@ -14,7 +14,7 @@ namespace CGCP
             return;
         }
 
-        if (function_ == nullptr)
+        if (!function_)
         {
             THROW_EXCEPTION("Function is not set");
             return;

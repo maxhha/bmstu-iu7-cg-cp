@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "src/Exception.h"
 #include "src/FieldFunction.h"
 #include "src/QtEngine.h"
 #include "src/QtMeshDrawer.h"
@@ -218,19 +219,6 @@ void MainWindow::handle_loader_progress(
     handle_loader_finish(f);
 
     loader_dialog_->close();
-
-    // engine_->polygonizer()
-    //     .get("dmc")
-    //     .run(
-    //         [&](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
-    //         {
-    //             emit polygonizer_progress(mesh, percent);
-    //         });
-
-    // polygonizer_dialog_->reset();
-    // polygonizer_dialog_->show();
-
-    return;
 }
 
 void MainWindow::handle_loader_finish(FunctionPtr f)
@@ -262,23 +250,56 @@ void MainWindow::handle_loader_finish(FunctionPtr f)
         }
     }
 
-    this->ui->labelShapeX->setText(shape_x);
-    this->ui->labelShapeY->setText(shape_y);
-    this->ui->labelShapeZ->setText(shape_z);
+    ui->labelShapeX->setText(shape_x);
+    ui->labelShapeY->setText(shape_y);
+    ui->labelShapeZ->setText(shape_z);
 
-    this->ui->labelVoxelX->setValue(scale_x);
-    this->ui->labelVoxelY->setValue(scale_y);
-    this->ui->labelVoxelZ->setValue(scale_z);
-
-    // this->ui->labelShapeX->update();
-    // this->ui->labelShapeY->update();
-    // this->ui->labelShapeZ->update();
-
-    // this->ui->labelVoxelX->update();
-    // this->ui->labelVoxelY->update();
-    // this->ui->labelVoxelZ->update();
+    ui->labelVoxelX->setValue(scale_x);
+    ui->labelVoxelY->setValue(scale_y);
+    ui->labelVoxelZ->setValue(scale_z);
 
     QCoreApplication::processEvents();
+}
 
-    // this->ui->load->update();
+void MainWindow::on_buttonPolygonize_clicked()
+{
+    auto config = engine_->polygonizer().get("dmc").config();
+
+    config["grid_dim_x"] = QString::number(ui->inputDimX->value()).toStdString();
+    config["grid_dim_y"] = QString::number(ui->inputDimY->value()).toStdString();
+    config["grid_dim_z"] = QString::number(ui->inputDimZ->value()).toStdString();
+
+    config["tolerance"] = QString::number(ui->inputTolerance->value()).toStdString();
+    config["max_depth"] = QString::number(ui->inputMaxDepth->value()).toStdString();
+
+    try
+    {
+        engine_->polygonizer().get("dmc").config(config);
+
+        engine_->polygonizer()
+            .get("dmc")
+            .run(
+                [&](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+                {
+                    emit polygonizer_progress(mesh, percent);
+                });
+    }
+    catch (CGCP::Exception &e)
+    {
+        const char *text = e.message().c_str();
+
+        if (e.message().compare("Function is not set") == 0)
+        {
+            text = "Нет данных томографии";
+        }
+
+        QMessageBox msg;
+        msg.setText(text);
+        msg.exec();
+
+        return;
+    }
+
+    polygonizer_dialog_->reset();
+    polygonizer_dialog_->show();
 }

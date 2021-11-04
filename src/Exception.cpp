@@ -4,15 +4,15 @@ namespace CGCP
 {
     Exception::Exception(std::string file,
                          int line,
-                         std::string msg = "Unknown error")
+                         std::string msg = "Unknown error") : message_(msg)
     {
-        message = std::string("") +
-                  "\n" + "At " + file + ":" + std::to_string(line) +
-                  "\n" + msg;
+        what_message_ = std::string("") +
+                        "\n" + "At " + file + ":" + std::to_string(line) +
+                        "\n" + msg;
     }
 
     const char *Exception::what() const noexcept
     {
-        return message.c_str();
+        return what_message_.c_str();
     }
 } // namespace CGCP
