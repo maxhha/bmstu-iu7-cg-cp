@@ -104,14 +104,10 @@ void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, d
 
     polygonizer_dialog_->setValue(percent * 100);
 
-    if (percent >= 1 - std::numeric_limits<double>::epsilon())
-    {
-        polygonizer_dialog_->close();
-    }
-
     if (mesh)
     {
-        qDebug() << "triangles:" << mesh->triangles().size();
+        polygonizer_dialog_->close();
+        ui->labelTriangles->setText(QString::number(mesh->triangles().size()));
         engine_->drawer().get("main").setMesh(mesh);
     }
 }
@@ -302,4 +298,9 @@ void MainWindow::on_buttonPolygonize_clicked()
 
     polygonizer_dialog_->reset();
     polygonizer_dialog_->show();
+}
+
+void MainWindow::on_buttonReset_clicked()
+{
+    engine_->drawer().get("main").resetTransformation();
 }

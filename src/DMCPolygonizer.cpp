@@ -83,7 +83,7 @@ namespace CGCP
         auto origin = function_->domain().mix(Vec3Df(0.5));
 
         progress_receiver(
-            std::make_shared<Mesh>(triangles, origin),
+            std::make_shared<Mesh>(triangles, origin, function_->domain()),
             1);
 
         finished();

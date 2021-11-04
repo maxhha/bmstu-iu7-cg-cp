@@ -46,6 +46,8 @@ private slots:
 
     void on_buttonPolygonize_clicked();
 
+    void on_buttonReset_clicked();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void handle_loader_finish(FunctionPtr f);

@@ -25,7 +25,11 @@ static inline T clamp(T x, T min_x, T max_x)
     return x;
 }
 
-QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), scene_(new QGraphicsScene(view_)), urd_normal_(-0.08, 0.08)
+QtMeshDrawer::QtMeshDrawer(QGraphicsView *view)
+    : QWidget(view),
+      view_(view),
+      scene_(new QGraphicsScene(view_)),
+      urd_normal_(-0.08, 0.08)
 {
     light_direction.normalize();
 
@@ -34,7 +38,6 @@ QtMeshDrawer::QtMeshDrawer(QGraphicsView *view) : QWidget(view), view_(view), sc
     view_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     updateBuffers();
-    translate(CGCP::Vec3Df(0, 0, -60));
 };
 
 void QtMeshDrawer::updateBuffers()
@@ -231,7 +234,7 @@ QVector3D QtMeshDrawer::transformMesh(const CGCP::Vec3Df &p)
     v -= origin;
     v *= scale_;
     v = rotate_.map(v);
-    v += origin - translate_;
+    v += base_ + translate_;
 
     return v;
 }
@@ -268,6 +271,66 @@ QColor QtMeshDrawer::color(const CGCP::Triangle3Df &t)
         dark_color.red() * (1 - c) + light_color.red() * c,
         dark_color.green() * (1 - c) + light_color.green() * c,
         dark_color.blue() * (1 - c) + light_color.blue() * c);
+}
+
+void QtMeshDrawer::resetTransformation()
+{
+    scale_ = QVector3D(1, 1, 1);
+    translate_ = QVector3D(0, 0, 0);
+    base_ = QVector3D(0, 0, 0);
+    rotate_.setToIdentity();
+
+    if (mesh_)
+    {
+        QVector3D origin = Vec3Df2QVector3D(mesh_->origin());
+
+        int w = view_->geometry().width();
+        int h = view_->geometry().height();
+
+        double ratio = (double)w / h;
+
+        projection_.setToIdentity();
+
+        projection_.perspective(
+            PERSPECTIVE_VERTICAL_ANGLE,
+            ratio,
+            PERSPECTIVE_NEAR_PLANE,
+            PERSPECTIVE_FAR_PLANE);
+
+        auto minimum = mesh_->domain().start();
+        auto maximum = mesh_->domain().end();
+
+        std::vector<CGCP::Vec3Df> points = {
+            CGCP::Vec3Df(minimum.x(), minimum.y(), minimum.z()),
+            CGCP::Vec3Df(maximum.x(), minimum.y(), minimum.z()),
+            CGCP::Vec3Df(minimum.x(), maximum.y(), minimum.z()),
+            CGCP::Vec3Df(maximum.x(), maximum.y(), minimum.z()),
+            CGCP::Vec3Df(minimum.x(), minimum.y(), maximum.z()),
+            CGCP::Vec3Df(maximum.x(), minimum.y(), maximum.z()),
+            CGCP::Vec3Df(minimum.x(), maximum.y(), maximum.z()),
+            CGCP::Vec3Df(maximum.x(), maximum.y(), maximum.z()),
+        };
+
+#define B 32
+
+        for (bool inside = false; !inside; base_.setZ(base_.z() + 1))
+        {
+            inside = true;
+
+            for (auto &it : points)
+            {
+                auto p = transform(it);
+                inside &= p.x() >= B && p.y() >= B && p.x() < w - B && p.y() < h - B;
+
+                if (!inside)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    draw();
 }
 
 void QtMeshDrawer::resizeEvent(QResizeEvent *event)

@@ -16,7 +16,7 @@ namespace CGCP
 
     public:
         explicit TIFunction(ScanPtr &scan)
-            : ContinuesFunction(AABB(Vec3Df(0), (scan->scale() - Vec3Ds(1)) * scan->shape())),
+            : ContinuesFunction(AABB(Vec3Df(0), scan->scale() * (scan->shape() - Vec3Ds(1)))),
               scan_(std::move(scan)){};
 
         const TomographyScan &scan() const { return *scan_; };

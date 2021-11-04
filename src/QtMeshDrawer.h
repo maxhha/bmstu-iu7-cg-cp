@@ -17,6 +17,7 @@ private:
     QGraphicsScene *scene_;
     QVector3D scale_{1, 1, 1};
     QVector3D translate_;
+    QVector3D base_;
     QMatrix4x4 rotate_;
     QMatrix4x4 projection_;
     QVector3D light_direction{1, 2, -3};
@@ -46,6 +47,7 @@ public:
 
     virtual void setMesh(const std::shared_ptr<CGCP::Mesh> mesh) override;
 
+    virtual void resetTransformation() override;
     virtual void rotate(const CGCP::Vec3Df &axis, double phi) override;
     virtual void translate(const CGCP::Vec3Df &offset) override;
     virtual void scale(const CGCP::Vec3Df &scale) override;

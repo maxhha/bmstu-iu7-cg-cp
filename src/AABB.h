@@ -32,7 +32,7 @@ namespace CGCP
         Vec3Df &end() { return end_; };
         const Vec3Df &end() const { return end_; };
 
-        Vec3Df size() { return end_ - start_; };
+        Vec3Df size() const { return end_ - start_; };
 
         Vec3Df mix(const Vec3Df &k) const { return start_.mix(end_, k); };
 

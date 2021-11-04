@@ -80,9 +80,9 @@ namespace CGCP
         Vec3D<T> mix(const Vec3D<T> &other, const Vec3D<B> &alpha) const
         {
             Vec3D<T> v(
-                x_ * (1 - alpha.x()) + other.x() * alpha.x(),
-                y_ * (1 - alpha.y()) + other.y() * alpha.y(),
-                z_ * (1 - alpha.z()) + other.z() * alpha.z());
+                x_ + (other.x() - x_) * alpha.x(),
+                y_ + (other.y() - y_) * alpha.y(),
+                z_ + (other.z() - z_) * alpha.z());
             return v;
         }
 

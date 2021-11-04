@@ -20,7 +20,7 @@ namespace CGCP
 
         Vec3Df grad(const Vec3Df &p)
         {
-            auto s = domain_.size() * Vec3Df(EPS, EPS, EPS);
+            auto s = domain_.size() * Vec3Df(EPS);
             return grad(p, s);
         };
 
