@@ -52,6 +52,7 @@ void QtMeshDrawer::updateBuffers()
 void QtMeshDrawer::setMesh(const std::shared_ptr<CGCP::Mesh> mesh)
 {
     MeshDrawer::setMesh(mesh);
+    resetTransformation();
     draw();
 };
 
@@ -278,7 +279,7 @@ void QtMeshDrawer::resetTransformation()
     scale_ = QVector3D(1, 1, 1);
     translate_ = QVector3D(0, 0, 0);
     base_ = QVector3D(0, 0, 0);
-    rotate_.setToIdentity();
+    // rotate_.setToIdentity();
 
     if (mesh_)
     {
@@ -311,7 +312,7 @@ void QtMeshDrawer::resetTransformation()
             CGCP::Vec3Df(maximum.x(), maximum.y(), maximum.z()),
         };
 
-#define B 32
+#define B 10
 
         for (bool inside = false; !inside; base_.setZ(base_.z() + 1))
         {

@@ -2,21 +2,35 @@
 
 namespace CGCP
 {
+    double TIFunction::at(long long x, long long y, long long z) const
+    {
+        if (
+            x < 0 ||
+            y < 0 ||
+            z < 0 ||
+            x >= scan_->shape().x() ||
+            y >= scan_->shape().y() ||
+            z >= scan_->shape().z())
+        {
+            return 0;
+        }
+
+        return scan_->at(Vec3Ds(x, y, z));
+    }
+
     double TIFunction::operator()(const Vec3Df &position) const
     {
         Vec3Df p = position / scan_->scale();
-        Vec3Ds limit = scan_->shape() - Vec3Ds(2);
-        p = p.clamp(Vec3Ds(0), limit);
-        Vec3Ds ps(p);
+        Vec3Dll ps(p);
 
-        double xyz = scan_->at(ps + Vec3Ds(0, 0, 0));
-        double Xyz = scan_->at(ps + Vec3Ds(1, 0, 0));
-        double xYz = scan_->at(ps + Vec3Ds(0, 1, 0));
-        double XYz = scan_->at(ps + Vec3Ds(1, 1, 0));
-        double xyZ = scan_->at(ps + Vec3Ds(0, 0, 1));
-        double XyZ = scan_->at(ps + Vec3Ds(1, 0, 1));
-        double xYZ = scan_->at(ps + Vec3Ds(0, 1, 1));
-        double XYZ = scan_->at(ps + Vec3Ds(1, 1, 1));
+        double xyz = at(ps.x() + 0, ps.y() + 0, ps.z() + 0);
+        double Xyz = at(ps.x() + 1, ps.y() + 0, ps.z() + 0);
+        double xYz = at(ps.x() + 0, ps.y() + 1, ps.z() + 0);
+        double XYz = at(ps.x() + 1, ps.y() + 1, ps.z() + 0);
+        double xyZ = at(ps.x() + 0, ps.y() + 0, ps.z() + 1);
+        double XyZ = at(ps.x() + 1, ps.y() + 0, ps.z() + 1);
+        double xYZ = at(ps.x() + 0, ps.y() + 1, ps.z() + 1);
+        double XYZ = at(ps.x() + 1, ps.y() + 1, ps.z() + 1);
 
         p = p - ps;
 

@@ -36,12 +36,12 @@ namespace CGCP
             auto ix1 = ix + 1;
             auto iy0 = iy * dim_.x();
             auto iy1 = (iy + 1) * dim_.x();
-            auto iz0 = iz * dim_.x() * dim_.z();
-            auto iz1 = (iz + 1) * dim_.x() * dim_.z();
+            auto iz0 = iz * dim_.x() * dim_.y();
+            auto iz1 = (iz + 1) * dim_.x() * dim_.y();
 
             enumerateCell(triangles[omp_get_thread_num()], children[j]);
 
-            if (ix != dim_.x() - 1)
+            if (ix < dim_.x() - 1)
             {
                 enumerateFaceX(
                     triangles[omp_get_thread_num()],
@@ -49,7 +49,7 @@ namespace CGCP
                     children[ix1 + iy0 + iz0]);
             }
 
-            if (iy != dim_.y() - 1)
+            if (iy < dim_.y() - 1)
             {
                 enumerateFaceY(
                     triangles[omp_get_thread_num()],
@@ -57,7 +57,7 @@ namespace CGCP
                     children[ix0 + iy1 + iz0]);
             }
 
-            if (iz != dim_.z() - 1)
+            if (iz < dim_.z() - 1)
             {
                 enumerateFaceZ(
                     triangles[omp_get_thread_num()],
@@ -65,7 +65,7 @@ namespace CGCP
                     children[ix0 + iy0 + iz1]);
             }
 
-            if (ix != dim_.x() - 1 && iy != dim_.y() - 1)
+            if (ix < dim_.x() - 1 && iy < dim_.y() - 1)
             {
                 enumerateEdgeXY(
                     triangles[omp_get_thread_num()],
@@ -75,7 +75,7 @@ namespace CGCP
                     children[ix1 + iy1 + iz0]);
             }
 
-            if (iy != dim_.y() - 1 && iz != dim_.z() - 1)
+            if (iy < dim_.y() - 1 && iz < dim_.z() - 1)
             {
                 enumerateEdgeYZ(
                     triangles[omp_get_thread_num()],
@@ -85,7 +85,7 @@ namespace CGCP
                     children[ix0 + iy1 + iz1]);
             }
 
-            if (ix != dim_.x() - 1 && iz != dim_.z() - 1)
+            if (ix < dim_.x() - 1 && iz < dim_.z() - 1)
             {
                 enumerateEdgeXZ(
                     triangles[omp_get_thread_num()],
@@ -95,7 +95,7 @@ namespace CGCP
                     children[(ix1 + iy0 + iz1)]);
             }
 
-            if (ix != dim_.x() - 1 && iy != dim_.y() - 1 && iz != dim_.z() - 1)
+            if (ix < dim_.x() - 1 && iy < dim_.y() - 1 && iz < dim_.z() - 1)
             {
                 enumerateVertex(
                     triangles[omp_get_thread_num()],

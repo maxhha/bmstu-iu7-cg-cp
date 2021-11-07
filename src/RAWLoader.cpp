@@ -50,7 +50,7 @@ namespace CGCP
         }
 
         std::string rawfile_filename;
-        Vec3D<long long> resolution;
+        Vec3Dll resolution;
         Vec3Df scale(1);
         std::size_t bpv = 1;
 
@@ -129,15 +129,15 @@ namespace CGCP
 
         Vec3Ds dim(resolution);
 
-        scan_ = std::make_unique<TomographyScan>(dim, scale);
+        auto scan = std::make_shared<TomographyScan>(dim, scale);
 
         double max_value = (1 << (8 * bpv)) - 1;
 
-        for (std::size_t z = 0; z < scan_->shape().z(); z++)
+        for (std::size_t z = 0; z < scan->shape().z(); z++)
         {
-            for (std::size_t y = 0; y < scan_->shape().y(); y++)
+            for (std::size_t y = 0; y < scan->shape().y(); y++)
             {
-                for (std::size_t x = 0; x < scan_->shape().x(); x++)
+                for (std::size_t x = 0; x < scan->shape().x(); x++)
                 {
                     unsigned char lo = 0;
                     unsigned char hi = 0;
@@ -148,34 +148,20 @@ namespace CGCP
                         rawfile.read(reinterpret_cast<char *>(&hi), 1);
                     }
 
-                    // if (lo > 0)
-                    // {
-                    //     qDebug() << lo;
-                    // }
+                    double v = ((unsigned int)hi << 8) | lo;
 
-                    scan_->at(Vec3Ds(x, y, z)) = (double)(((unsigned int)hi << 8) | lo) / max_value - 0.2;
+                    scan->at(Vec3Ds(x, y, z)) = v / max_value;
                 }
             }
-            progress(Error::OK, nullptr, PROGRESS_READ_HEADER + PROGRESS_READ_RAW * z / scan_->shape().z());
+            progress(
+                Error::OK,
+                nullptr,
+                PROGRESS_READ_HEADER +
+                    PROGRESS_READ_RAW * z / scan->shape().z());
         }
-
-        // for (std::size_t x = 0; x < 10; x++)
-        // {
-        //     for (int y = 0; y < 10; y++)
-        //     {
-        //         for (int z = 0; z < 10; z++)
-        //         {
-        //             double xr = x - 5;
-        //             double yr = y - 5;
-        //             double zr = z - 5;
-        //             scan_->at(Vec3Ds(x, y, z)) = xr * xr + yr * yr + zr * zr - 16;
-        //         }
-        //     }
-        //     progress(Error::OK, nullptr, PROGRESS_READ_HEADER + PROGRESS_READ_RAW *);
-        // }
 
         rawfile.close();
 
-        progress(Error::OK, buildFunction(), 1);
+        progress(Error::OK, scan, 1);
     }
 } // namespace CGCP

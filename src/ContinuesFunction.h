@@ -8,17 +8,17 @@ namespace CGCP
 {
     class ContinuesFunction
     {
-    private:
+    protected:
         AABB domain_;
 
     public:
         explicit ContinuesFunction(const AABB &domain) : domain_(domain){};
 
-        const AABB &domain() const { return domain_; }
+        const AABB &domain() const { return domain_; };
 
         virtual double operator()(const Vec3Df &position) const = 0;
 
-        Vec3Df grad(const Vec3Df &p)
+        Vec3Df grad(const Vec3Df &p) const
         {
             auto s = domain_.size() * Vec3Df(EPS);
             return grad(p, s);

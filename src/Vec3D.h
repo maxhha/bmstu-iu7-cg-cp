@@ -131,4 +131,5 @@ namespace CGCP
     using Vec3Df = Vec3D<double>;
     using Vec3Di = Vec3D<int>;
     using Vec3Ds = Vec3D<std::size_t>;
+    using Vec3Dll = Vec3D<long long>;
 } // namespace CGCP

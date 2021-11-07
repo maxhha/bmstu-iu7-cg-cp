@@ -28,7 +28,7 @@ namespace CGCP
 
     void DMCPolygonizer::setConfig(const DMCPolygonizer::Config &config)
     {
-        auto dim = Vec3D<long long>(
+        auto dim = Vec3Dll(
             std::stoll(config.at(GRID_DIM_X)),
             std::stoll(config.at(GRID_DIM_Y)),
             std::stoll(config.at(GRID_DIM_Z)));

@@ -61,7 +61,7 @@ namespace CGCP
             Triangles &triangles,
             const std::array<const FieldVertex *, 8> &verticies);
 
-        Vec3Ds dim_;
+        Vec3Dll dim_;
         double nominal_weight_;
         double tolerance_;
         int max_depth_;

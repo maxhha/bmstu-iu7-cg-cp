@@ -48,9 +48,14 @@ private slots:
 
     void on_buttonReset_clicked();
 
+    void on_buttonRemoveMesh_clicked();
+
+    void on_buttonChangeVoxel_clicked();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void handle_loader_finish(FunctionPtr f);
+    FunctionPtr compose_function();
 
 private:
     Ui::MainWindow *ui;

@@ -59,33 +59,6 @@ MainWindow::MainWindow(QWidget *parent)
         &QProgressDialog::canceled,
         this,
         &MainWindow::handle_cancel_loader);
-
-    // std::unique_ptr<CGCP::ContinuesFunction>
-    //     ff = std::make_unique<CGCP::FieldFunction>(f, domain);
-
-    // engine_->loader()
-    //     .get("raw")
-    //     .load(
-    //         "blabla",
-    //         [=](CGCP::Error err, std::unique_ptr<CGCP::ContinuesFunction> ff, double progress) -> void
-    //         {
-    //             qDebug() << "load" << err << progress;
-
-    //             if (ff)
-    //             {
-    //                 engine_->polygonizer()
-    //                     .get("dmc")
-    //                     .function(ff);
-
-    //                 engine_->polygonizer()
-    //                     .get("dmc")
-    //                     .run(
-    //                         [=](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
-    //                         {
-    //                             emit polygonizer_progress(mesh, percent);
-    //                         });
-    //             }
-    //         });
 }
 
 MainWindow::~MainWindow()
@@ -157,16 +130,19 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::on_buttonOpen_clicked()
 {
-    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/TeddyBear/Teddybear.dat");
+    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/Sphere/Sphere.dat");
     QString filename = QFileDialog::getOpenFileName(this);
 
     engine_->loader()
         .get("raw")
         .load(
             filename.toStdString(),
-            [&](CGCP::Error err, std::unique_ptr<CGCP::ContinuesFunction> f, double percent) -> void
+            [&](CGCP::Error err, std::shared_ptr<CGCP::TomographyScan> scan, double percent) -> void
             {
-                emit loader_progress(err, std::move(f), percent);
+                emit loader_progress(
+                    err,
+                    scan ? std::make_shared<CGCP::TIFunction>(scan) : nullptr,
+                    percent);
             });
 
     loader_dialog_->reset();
@@ -219,14 +195,12 @@ void MainWindow::handle_loader_progress(
 
 void MainWindow::handle_loader_finish(FunctionPtr f)
 {
-    QString shape_x, shape_y, shape_z;
-    double scale_x, scale_y, scale_z;
+    QString shape_x = "", shape_y = "", shape_z = "";
+    double scale_x = 0, scale_y = 0, scale_z = 0;
 
     if (f)
     {
-        engine_->polygonizer()
-            .get("dmc")
-            .function(f);
+        engine_->function().set(f);
 
         auto ti_f = std::dynamic_pointer_cast<CGCP::TIFunction>(f);
 
@@ -236,13 +210,13 @@ void MainWindow::handle_loader_finish(FunctionPtr f)
         }
         else
         {
-            shape_x = QString::number(ti_f->scan().shape().x());
-            shape_y = QString::number(ti_f->scan().shape().y());
-            shape_z = QString::number(ti_f->scan().shape().z());
+            shape_x = QString::number(ti_f->scan()->shape().x());
+            shape_y = QString::number(ti_f->scan()->shape().y());
+            shape_z = QString::number(ti_f->scan()->shape().z());
 
-            scale_x = ti_f->scan().scale().x();
-            scale_y = ti_f->scan().scale().y();
-            scale_z = ti_f->scan().scale().z();
+            scale_x = ti_f->scan()->scale().x();
+            scale_y = ti_f->scan()->scale().y();
+            scale_z = ti_f->scan()->scale().z();
         }
     }
 
@@ -259,6 +233,9 @@ void MainWindow::handle_loader_finish(FunctionPtr f)
 
 void MainWindow::on_buttonPolygonize_clicked()
 {
+    auto f = compose_function();
+    engine_->polygonizer().get("dmc").function(f);
+
     auto config = engine_->polygonizer().get("dmc").config();
 
     config["grid_dim_x"] = QString::number(ui->inputDimX->value()).toStdString();
@@ -298,6 +275,63 @@ void MainWindow::on_buttonPolygonize_clicked()
 
     polygonizer_dialog_->reset();
     polygonizer_dialog_->show();
+}
+
+void MainWindow::on_buttonRemoveMesh_clicked()
+{
+    engine_->drawer().get("main").setMesh(nullptr);
+}
+
+void MainWindow::on_buttonChangeVoxel_clicked()
+{
+    auto f = engine_->function().result();
+
+    if (!f)
+    {
+        QMessageBox msg;
+        msg.setText("Сначала загрузите файл");
+        msg.exec();
+    }
+
+    auto nn_f = std::dynamic_pointer_cast<CGCP::TIFunction>(f);
+
+    if (!nn_f)
+    {
+        qDebug() << "unknown function type";
+    }
+    else
+    {
+        auto scan = nn_f->scan();
+        scan->scale().x() = ui->labelVoxelX->value();
+        scan->scale().y() = ui->labelVoxelY->value();
+        scan->scale().z() = ui->labelVoxelZ->value();
+
+        engine_->function().set(std::make_shared<CGCP::TIFunction>(scan));
+    }
+}
+
+MainWindow::FunctionPtr MainWindow::compose_function()
+{
+    return engine_->function()
+        .add(
+            "average",
+            {
+                {"size",
+                 QString::number(ui->inputAverage->value()).toStdString()},
+                {"step_x",
+                 QString::number(ui->labelVoxelX->value()).toStdString()},
+                {"step_y",
+                 QString::number(ui->labelVoxelY->value()).toStdString()},
+                {"step_z",
+                 QString::number(ui->labelVoxelZ->value()).toStdString()},
+            })
+        .add(
+            "offset",
+            {
+                {"value",
+                 QString::number(-ui->inputOffset->value()).toStdString()},
+            })
+        .result();
 }
 
 void MainWindow::on_buttonReset_clicked()

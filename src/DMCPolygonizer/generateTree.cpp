@@ -1,6 +1,7 @@
 #include "../DMCPolygonizer.h"
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <algorithm>
 
 namespace CGCP
 {
@@ -11,6 +12,11 @@ namespace CGCP
         const Vec3Df &maximum,
         int depth)
     {
+        if (isCancelled())
+        {
+            return nullptr;
+        }
+
         std::array<Vec3Df, 8> points = {{
             {minimum.x(), minimum.y(), minimum.z()},
             {maximum.x(), minimum.y(), minimum.z()},
@@ -76,13 +82,28 @@ namespace CGCP
         Eigen::Matrix<double, 4, 1> x = a.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV).solve(b);
 
         auto center = Vec3Df(x(0), x(1), x(2)) + medium;
+
+        if (
+            center.x() < minimum.x() ||
+            center.y() < minimum.y() ||
+            center.z() < minimum.z() ||
+            center.x() > maximum.x() ||
+            center.y() > maximum.y() ||
+            center.z() > maximum.z())
+        {
+            auto l = std::max({std::abs(x(0)), std::abs(x(1)), std::abs(x(2))});
+            auto k = Vec3Df(x(0), x(1), x(2)) / Vec3Df(l * 2) + Vec3Df(0.5);
+            center = minimum.mix(maximum, k);
+        }
+
         auto offset = (*function_)(center);
 
         double error = 0;
         for (int i = 0; i < 8; ++i)
         {
-            double error_i = offset - values[i] - grads[i].dot(center - points[i]);
-            error += error_i * error_i;
+            double ti = values[i] + grads[i].dot(center - points[i]);
+            double error_i = offset - ti;
+            error += error_i * error_i / (1 + grads[i].dot(grads[i]));
         }
 
         if (depth >= max_depth_ || error < tolerance_ * tolerance_)
