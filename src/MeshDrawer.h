@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Mesh.h"
+#include <map>
 #include <memory>
+#include <string>
 
 namespace CGCP
 {
@@ -9,6 +11,7 @@ namespace CGCP
     {
     private:
     protected:
+        using Config = std::map<std::string, std::string>;
         std::shared_ptr<Mesh> mesh_;
 
     public:
@@ -17,6 +20,7 @@ namespace CGCP
         virtual void rotate(const Vec3Df &axis, double phi){};
         virtual void translate(const Vec3Df &offset){};
         virtual void scale(const Vec3Df &scale){};
+        virtual void config(const Config &config){};
 
         virtual ~MeshDrawer() = default;
     };

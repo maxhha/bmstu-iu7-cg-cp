@@ -9,6 +9,7 @@ CONFIG += c++17
 # DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += $$files("src/*.cpp", true)
+SOURCES += $$files("widgets/*.cpp", true)
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
@@ -16,6 +17,7 @@ SOURCES += \
     lib/fmt/src/os.cc
 
 HEADERS += $$files("src/*.h", true)
+HEADERS += $$files("widgets/*.h", true)
 HEADERS += \
     mainwindow.h
 
@@ -23,6 +25,7 @@ FORMS += \
     mainwindow.ui
 
 INCLUDEPATH += \
+    widgets \
     lib/fmt/include \
     lib/eigen
 

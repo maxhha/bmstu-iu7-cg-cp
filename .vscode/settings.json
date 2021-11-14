@@ -107,6 +107,7 @@
     "stoull",
     "Tomography",
     "vertices",
-    "Voxel"
+    "Voxel",
+    "widgets"
   ]
 }
