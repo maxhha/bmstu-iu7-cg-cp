@@ -1,5 +1,10 @@
 #include "../DMCPolygonizer.h"
 
+static double get_offset(double v1, double v2)
+{
+    double d = v2 - v1;
+    return d == 0.0 ? 0.5 : -v1 / d;
+}
 namespace CGCP
 {
     void DMCPolygonizer::marchingCube(Triangles &triangles, const std::array<const FieldVertex *, 8> &vertices)
@@ -295,8 +300,7 @@ namespace CGCP
             if (v1 * v2 < 0)
             {
                 points[edge_index] = trans_vertices[i]->position().mix(
-                    trans_vertices[j]->position(),
-                    -v1 / (v2 - v1));
+                    trans_vertices[j]->position(), get_offset(v1, v2));
             }
         };
 

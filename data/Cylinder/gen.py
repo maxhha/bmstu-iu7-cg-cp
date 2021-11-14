@@ -12,6 +12,7 @@ SCALE_Z = 1
 CENTER_X = 64
 CENTER_Y = 64
 CENTER_Z = 64
+HEIGHT = 50
 
 with open(DAT_FILE_NAME, "w") as f:
     f.write(f"ObjectFileName: {RAW_FILE_NAME}\n")
@@ -24,9 +25,13 @@ result = []
 for z in range(DIM_Z):
     for y in range(DIM_Y):
         for x in range(DIM_X):
-            result.append(
+            dist = int((
                 (x - CENTER_X) ** 2 +
                 (y - CENTER_Y) ** 2
+            )**0.5)
+            height = max(0, min(HEIGHT - abs(z - CENTER_Z), 1))
+            result.append(
+                dist * height + (1 - height) * abs(z - CENTER_Z)
             )
 
 max_v = max(result)

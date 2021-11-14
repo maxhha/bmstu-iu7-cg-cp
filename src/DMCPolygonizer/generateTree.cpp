@@ -3,6 +3,8 @@
 #include <Eigen/Dense>
 #include <algorithm>
 
+#define N 4
+
 namespace CGCP
 {
     std::shared_ptr<TreeNode> DMCPolygonizer::generateTree(
@@ -17,19 +19,26 @@ namespace CGCP
             return nullptr;
         }
 
-        std::array<Vec3Df, 8> points = {{
-            {minimum.x(), minimum.y(), minimum.z()},
-            {maximum.x(), minimum.y(), minimum.z()},
-            {minimum.x(), maximum.y(), minimum.z()},
-            {maximum.x(), maximum.y(), minimum.z()},
-            {minimum.x(), minimum.y(), maximum.z()},
-            {maximum.x(), minimum.y(), maximum.z()},
-            {minimum.x(), maximum.y(), maximum.z()},
-            {maximum.x(), maximum.y(), maximum.z()},
-        }};
+        std::array<Vec3Df, N * N * N> points;
 
-        std::array<Vec3Df, 8> grads;
-        std::array<double, 8> values;
+        for (int i = 0; i < N; ++i)
+        {
+            for (int j = 0; j < N; ++j)
+            {
+                for (int k = 0; k < N; ++k)
+                {
+                    points[i * N * N + j * N + k] = minimum.mix(
+                        maximum,
+                        Vec3Df(
+                            i / (N - 1),
+                            j / (N - 1),
+                            k / (N - 1)));
+                }
+            }
+        }
+
+        std::array<Vec3Df, N * N * N> grads;
+        std::array<double, N * N * N> values;
 
         std::transform(
             points.begin(),
@@ -45,9 +54,11 @@ namespace CGCP
             [&](const auto &p)
             { return (*function_)(p); });
 
-        Eigen::Matrix<double, 11, 4> a;
+        Eigen::Matrix<double, 3 + N * N * N, 4> a;
 
-        for (int i = 0; i < 8; ++i)
+        int i;
+
+        for (i = 0; i < N * N * N; ++i)
         {
             a(i, 0) = grads[i].x();
             a(i, 1) = grads[i].y();
@@ -55,29 +66,31 @@ namespace CGCP
             a(i, 3) = -1.0;
         }
 
-        a(8, 0) = nominal_weight_;
-        a(8, 1) = 0.0;
-        a(8, 2) = 0.0;
-        a(8, 3) = 0.0;
-        a(9, 0) = 0.0;
-        a(9, 1) = nominal_weight_;
-        a(9, 2) = 0.0;
-        a(9, 3) = 0.0;
-        a(10, 0) = 0.0;
-        a(10, 1) = 0.0;
-        a(10, 2) = nominal_weight_;
-        a(10, 3) = 0.0;
+        a(i, 0) = nominal_weight_;
+        a(i, 1) = 0.0;
+        a(i, 2) = 0.0;
+        a(i, 3) = 0.0;
+        ++i;
+        a(i, 0) = 0.0;
+        a(i, 1) = nominal_weight_;
+        a(i, 2) = 0.0;
+        a(i, 3) = 0.0;
+        ++i;
+        a(i, 0) = 0.0;
+        a(i, 1) = 0.0;
+        a(i, 2) = nominal_weight_;
+        a(i, 3) = 0.0;
 
-        Eigen::Matrix<double, 11, 1> b;
+        Eigen::Matrix<double, 3 + N * N * N, 1> b;
 
         auto medium = (minimum + maximum) / 2;
 
-        for (int i = 0; i < 8; ++i)
+        for (i = 0; i < N * N * N; ++i)
             b(i) = grads[i].dot(points[i] - medium) - values[i];
 
-        b(8) = 0.0;
-        b(9) = 0.0;
-        b(10) = 0.0;
+        b(i++) = 0.0;
+        b(i++) = 0.0;
+        b(i++) = 0.0;
 
         Eigen::Matrix<double, 4, 1> x = a.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV).solve(b);
 
@@ -99,14 +112,14 @@ namespace CGCP
         auto offset = (*function_)(center);
 
         double error = 0;
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < N * N * N; ++i)
         {
             double ti = values[i] + grads[i].dot(center - points[i]);
             double error_i = offset - ti;
             error += error_i * error_i / (1 + grads[i].dot(grads[i]));
         }
 
-        if (depth >= max_depth_ || error < tolerance_ * tolerance_)
+        if (depth >= max_depth_ || error < tolerance_)
         {
             return leafs.store(LeafTreeNode(FieldVertex(center, offset)));
         }

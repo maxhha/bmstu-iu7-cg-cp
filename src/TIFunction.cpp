@@ -1,10 +1,17 @@
 #include "TIFunction.h"
+#include <algorithm>
 
 namespace CGCP
 {
     double TIFunction::at(long long x, long long y, long long z) const
     {
-        if (
+        if (clamp_)
+        {
+            x = std::clamp<long long>(x, 0, (long long)scan_->shape().x() - 1);
+            y = std::clamp<long long>(y, 0, (long long)scan_->shape().y() - 1);
+            z = std::clamp<long long>(z, 0, (long long)scan_->shape().z() - 1);
+        }
+        else if (
             x < 0 ||
             y < 0 ||
             z < 0 ||

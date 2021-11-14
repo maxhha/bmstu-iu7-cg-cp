@@ -49,6 +49,6 @@ namespace CGCP
             }
         }
 
-        return std::move(children);
+        return children;
     }
 } // namespace CGCP

@@ -13,18 +13,17 @@ namespace CGCP
         using ScanPtr = std::shared_ptr<TomographyScan>;
 
         ScanPtr scan_;
+        bool clamp_ = false;
 
         double at(long long x, long long y, long long z) const;
 
     public:
-        explicit TIFunction(ScanPtr &scan)
+        TIFunction(ScanPtr &scan, bool clamp, bool with_edges)
             : ContinuesFunction(AABB(
-                  scan->scale() * Vec3Df(-1),
-                  scan->scale() * (scan->shape() + Vec3Ds(1)))),
-              scan_(std::move(scan)){};
-
-        const ScanPtr scan() const { return scan_; };
-        ScanPtr scan() { return scan_; };
+                  scan->scale() * Vec3Df(with_edges ? -1 : 0),
+                  scan->scale() * (scan->shape() + Vec3Ds(with_edges ? 1 : 0)))),
+              scan_(std::move(scan)),
+              clamp_(clamp){};
 
         virtual double
         operator()(const Vec3Df &position) const override;
