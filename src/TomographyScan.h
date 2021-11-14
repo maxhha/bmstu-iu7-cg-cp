@@ -25,18 +25,28 @@ namespace CGCP
         Vec3Df &scale() { return scale_; };
         const Vec3Df &scale() const { return scale_; };
 
+        double at(std::size_t x, std::size_t y, std::size_t z) const
+        {
+            return data_[x +
+                         y * shape_.x() +
+                         z * shape_.x() * shape_.y()];
+        };
+
+        double &at(std::size_t x, std::size_t y, std::size_t z)
+        {
+            return data_[x +
+                         y * shape_.x() +
+                         z * shape_.x() * shape_.y()];
+        };
+
         double at(const Vec3Ds &p) const
         {
-            return data_[p.x() +
-                         p.y() * shape_.x() +
-                         p.z() * shape_.x() * shape_.y()];
+            return at(p.x(), p.y(), p.z());
         };
 
         double &at(const Vec3Ds &p)
         {
-            return data_[p.x() +
-                         p.y() * shape_.x() +
-                         p.z() * shape_.x() * shape_.y()];
+            return at(p.x(), p.y(), p.z());
         };
 
         ~TomographyScan() = default;

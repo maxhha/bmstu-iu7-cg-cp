@@ -13,6 +13,7 @@
 #include <QMetaType>
 #include <QPolygonF>
 #include <QResizeEvent>
+#include <fmt/format.h>
 #include <math.h>
 #include <type_traits>
 
@@ -22,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     qRegisterMetaType<MeshPtr>("MeshPtr");
-    qRegisterMetaType<FunctionPtr>("FunctionPtr");
+    qRegisterMetaType<ScanPtr>("ScanPtr");
     qRegisterMetaType<CGCP::Error>("CGCP::Error");
 
     QObject::connect(
@@ -37,8 +38,18 @@ MainWindow::MainWindow(QWidget *parent)
         this,
         &MainWindow::handle_loader_progress);
 
+    QObject::connect(
+        this,
+        &MainWindow::preprocess_progress,
+        this,
+        &MainWindow::handle_preprocess_progress);
+
     auto view = ui->graphicsView;
     engine_ = std::make_unique<QtEngine>(view);
+
+    preprocess_dialog_ = new QProgressDialog("Подготовка томографии...", "Отменить", 0, 100, this);
+    preprocess_dialog_->setWindowModality(Qt::WindowModal);
+    preprocess_dialog_->close();
 
     polygonizer_dialog_ = new QProgressDialog("Полигонизация...", "Отменить", 0, 100, this);
     polygonizer_dialog_->setWindowModality(Qt::WindowModal);
@@ -55,16 +66,34 @@ MainWindow::MainWindow(QWidget *parent)
         &MainWindow::handle_cancel_polygonizer);
 
     QObject::connect(
+        preprocess_dialog_,
+        &QProgressDialog::canceled,
+        this,
+        &MainWindow::handle_cancel_preprocess);
+
+    QObject::connect(
         loader_dialog_,
         &QProgressDialog::canceled,
         this,
         &MainWindow::handle_cancel_loader);
+
+    ui->inputColor1->setColor(QColor("#888088"));
+    ui->inputColor2->setColor(QColor("#200036"));
+    ui->inputColor3->setColor(QColor("#200036"));
+    ui->inputColor4->setColor(QColor("#100018"));
+    ui->inputColorBorder->setColor(QColor("#ff3333"));
+
+    triangles_label_ = new QLabel("Разрешение сцены:");
+    ui->statusbar->addPermanentWidget(triangles_label_);
+    triangles_label_ = new QLabel();
+    ui->statusbar->addPermanentWidget(triangles_label_);
 }
 
 MainWindow::~MainWindow()
 {
     delete loader_dialog_;
     delete polygonizer_dialog_;
+    delete preprocess_dialog_;
     delete ui;
 }
 
@@ -80,7 +109,7 @@ void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, d
     if (mesh)
     {
         polygonizer_dialog_->close();
-        ui->labelTriangles->setText(QString::number(mesh->triangles().size()));
+        triangles_label_->setText(QString::number(mesh->triangles().size()));
         engine_->drawer().get("main").setMesh(mesh);
     }
 }
@@ -139,10 +168,7 @@ void MainWindow::on_buttonOpen_clicked()
             filename.toStdString(),
             [&](CGCP::Error err, std::shared_ptr<CGCP::TomographyScan> scan, double percent) -> void
             {
-                emit loader_progress(
-                    err,
-                    scan ? std::make_shared<CGCP::TIFunction>(scan) : nullptr,
-                    percent);
+                emit loader_progress(err, scan, percent);
             });
 
     loader_dialog_->reset();
@@ -164,7 +190,7 @@ const char *messageForError(CGCP::Error err)
 
 void MainWindow::handle_loader_progress(
     CGCP::Error err,
-    std::shared_ptr<CGCP::ContinuesFunction> f,
+    ScanPtr s,
     double percent)
 {
     if (loader_dialog_->wasCanceled())
@@ -182,42 +208,33 @@ void MainWindow::handle_loader_progress(
         return;
     }
 
-    if (!f)
+    if (!s)
     {
         loader_dialog_->setValue(percent * 100);
         return;
     }
 
-    handle_loader_finish(f);
+    handle_loader_finish(s);
 
     loader_dialog_->close();
 }
 
-void MainWindow::handle_loader_finish(FunctionPtr f)
+void MainWindow::handle_loader_finish(ScanPtr s)
 {
     QString shape_x = "", shape_y = "", shape_z = "";
     double scale_x = 0, scale_y = 0, scale_z = 0;
 
-    if (f)
+    if (s)
     {
-        engine_->function().set(f);
+        scan_ = s;
 
-        auto ti_f = std::dynamic_pointer_cast<CGCP::TIFunction>(f);
+        shape_x = QString::number(s->shape().x());
+        shape_y = QString::number(s->shape().y());
+        shape_z = QString::number(s->shape().z());
 
-        if (!ti_f)
-        {
-            qDebug() << "unknown function type";
-        }
-        else
-        {
-            shape_x = QString::number(ti_f->scan()->shape().x());
-            shape_y = QString::number(ti_f->scan()->shape().y());
-            shape_z = QString::number(ti_f->scan()->shape().z());
-
-            scale_x = ti_f->scan()->scale().x();
-            scale_y = ti_f->scan()->scale().y();
-            scale_z = ti_f->scan()->scale().z();
-        }
+        scale_x = s->scale().x();
+        scale_y = s->scale().y();
+        scale_z = s->scale().z();
     }
 
     ui->labelShapeX->setText(shape_x);
@@ -231,9 +248,49 @@ void MainWindow::handle_loader_finish(FunctionPtr f)
     QCoreApplication::processEvents();
 }
 
-void MainWindow::on_buttonPolygonize_clicked()
+void MainWindow::handle_preprocess_progress(
+    CGCP::Error err,
+    ScanPtr s,
+    double percent)
 {
-    auto f = compose_function();
+    if (preprocess_dialog_->wasCanceled())
+    {
+        return;
+    }
+
+    if (err != CGCP::Error::OK)
+    {
+        preprocess_dialog_->close();
+        QMessageBox msg;
+        msg.setText(messageForError(err));
+        msg.exec();
+
+        return;
+    }
+
+    if (!s)
+    {
+        preprocess_dialog_->setValue(percent * 100);
+        return;
+    }
+
+    handle_preprocess_finish(s);
+
+    preprocess_dialog_->close();
+};
+
+void MainWindow::handle_cancel_preprocess()
+{
+    engine_->preprocessor().cancel();
+}
+
+void MainWindow::handle_preprocess_finish(ScanPtr scan)
+{
+    std::shared_ptr<CGCP::ContinuesFunction> f = std::make_shared<CGCP::TIFunction>(
+        scan,
+        ui->inputIncludeEdges->isChecked(),
+        ui->inputIncludeEdges->isChecked());
+
     engine_->polygonizer().get("dmc").function(f);
 
     auto config = engine_->polygonizer().get("dmc").config();
@@ -261,7 +318,42 @@ void MainWindow::on_buttonPolygonize_clicked()
     {
         const char *text = e.message().c_str();
 
-        if (e.message().compare("Function is not set") == 0)
+        QMessageBox msg;
+        msg.setText(text);
+        msg.exec();
+
+        return;
+    }
+
+    polygonizer_dialog_->reset();
+    polygonizer_dialog_->show();
+};
+
+void MainWindow::on_buttonPolygonize_clicked()
+{
+    try
+    {
+        engine_->preprocessor().run(
+            scan_,
+            {{
+                 "average",
+                 {{"size", fmt::format("{}", ui->inputAverage->value())}},
+             },
+             {"offset",
+              {{"value", fmt::format("{}", -ui->inputOffset->value())}}}},
+            [&](
+                CGCP::Error err,
+                std::shared_ptr<CGCP::TomographyScan> scan,
+                double p) -> void
+            {
+                emit preprocess_progress(err, scan, p);
+            });
+    }
+    catch (CGCP::Exception &e)
+    {
+        const char *text = e.message().c_str();
+
+        if (e.message().compare("Scan is not set") == 0)
         {
             text = "Нет данных томографии";
         }
@@ -273,8 +365,8 @@ void MainWindow::on_buttonPolygonize_clicked()
         return;
     }
 
-    polygonizer_dialog_->reset();
-    polygonizer_dialog_->show();
+    preprocess_dialog_->reset();
+    preprocess_dialog_->show();
 }
 
 void MainWindow::on_buttonRemoveMesh_clicked()
@@ -284,57 +376,53 @@ void MainWindow::on_buttonRemoveMesh_clicked()
 
 void MainWindow::on_buttonChangeVoxel_clicked()
 {
-    auto f = engine_->function().result();
-
-    if (!f)
+    if (!scan_)
     {
         QMessageBox msg;
         msg.setText("Сначала загрузите файл");
         msg.exec();
     }
 
-    auto nn_f = std::dynamic_pointer_cast<CGCP::TIFunction>(f);
-
-    if (!nn_f)
-    {
-        qDebug() << "unknown function type";
-    }
-    else
-    {
-        auto scan = nn_f->scan();
-        scan->scale().x() = ui->labelVoxelX->value();
-        scan->scale().y() = ui->labelVoxelY->value();
-        scan->scale().z() = ui->labelVoxelZ->value();
-
-        engine_->function().set(std::make_shared<CGCP::TIFunction>(scan));
-    }
-}
-
-MainWindow::FunctionPtr MainWindow::compose_function()
-{
-    return engine_->function()
-        .add(
-            "average",
-            {
-                {"size",
-                 QString::number(ui->inputAverage->value()).toStdString()},
-                {"step_x",
-                 QString::number(ui->labelVoxelX->value()).toStdString()},
-                {"step_y",
-                 QString::number(ui->labelVoxelY->value()).toStdString()},
-                {"step_z",
-                 QString::number(ui->labelVoxelZ->value()).toStdString()},
-            })
-        .add(
-            "offset",
-            {
-                {"value",
-                 QString::number(-ui->inputOffset->value()).toStdString()},
-            })
-        .result();
+    scan_->scale().x() = ui->labelVoxelX->value();
+    scan_->scale().y() = ui->labelVoxelY->value();
+    scan_->scale().z() = ui->labelVoxelZ->value();
 }
 
 void MainWindow::on_buttonReset_clicked()
 {
     engine_->drawer().get("main").resetTransformation();
+}
+
+void MainWindow::on_buttonDrawerConfig_clicked()
+{
+    std::map<std::string, std::string> config;
+
+    config["shadow"] = QString::number(
+                           ui->inputShadowEnabled->isChecked())
+                           .toStdString();
+    config["border"] = QString::number(
+                           ui->inputBorderEnabled->isChecked())
+                           .toStdString();
+
+    config["color1"] = ui->inputColor1->color()
+                           .name(QColor::HexRgb)
+                           .toStdString();
+    config["color2"] = ui->inputColor2->color()
+                           .name(QColor::HexRgb)
+                           .toStdString();
+    config["color3"] = ui->inputColor3->color()
+                           .name(QColor::HexRgb)
+                           .toStdString();
+    config["color4"] = ui->inputColor4->color()
+                           .name(QColor::HexRgb)
+                           .toStdString();
+    config["border_color"] = ui->inputColorBorder->color()
+                                 .name(QColor::HexRgb)
+                                 .toStdString();
+
+    config["light_x"] = QString::number(ui->inputLightX->value()).toStdString();
+    config["light_y"] = QString::number(ui->inputLightY->value()).toStdString();
+    config["light_z"] = QString::number(ui->inputLightZ->value()).toStdString();
+
+    engine_->drawer().get("main").config(config);
 }

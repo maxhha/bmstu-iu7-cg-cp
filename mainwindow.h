@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "src/Engine.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QProgressDialog>
 
@@ -19,13 +20,15 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    using FunctionPtr = std::shared_ptr<CGCP::ContinuesFunction>;
+    using ScanPtr = std::shared_ptr<CGCP::TomographyScan>;
     using MeshPtr = std::shared_ptr<CGCP::Mesh>;
 
 signals:
     void polygonizer_progress(MeshPtr mesh, double percent);
 
-    void loader_progress(CGCP::Error err, FunctionPtr f, double percent);
+    void loader_progress(CGCP::Error err, ScanPtr f, double percent);
+
+    void preprocess_progress(CGCP::Error err, ScanPtr f, double percent);
 
 private slots:
     void on_buttonTranslate_clicked();
@@ -36,11 +39,15 @@ private slots:
 
     void handle_polygonizer_progress(MeshPtr mesh, double percent);
 
-    void handle_loader_progress(CGCP::Error err, FunctionPtr f, double percent);
+    void handle_loader_progress(CGCP::Error err, ScanPtr s, double percent);
+
+    void handle_preprocess_progress(CGCP::Error err, ScanPtr s, double percent);
 
     void handle_cancel_polygonizer();
 
     void handle_cancel_loader();
+
+    void handle_cancel_preprocess();
 
     void on_buttonOpen_clicked();
 
@@ -52,15 +59,20 @@ private slots:
 
     void on_buttonChangeVoxel_clicked();
 
+    void on_buttonDrawerConfig_clicked();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    void handle_loader_finish(FunctionPtr f);
-    FunctionPtr compose_function();
+    void handle_loader_finish(ScanPtr s);
+    void handle_preprocess_finish(ScanPtr s);
 
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<CGCP::Engine> engine_;
+    ScanPtr scan_;
     QProgressDialog *polygonizer_dialog_;
+    QProgressDialog *preprocess_dialog_;
     QProgressDialog *loader_dialog_;
+    QLabel *triangles_label_;
 };
 #endif // MAINWINDOW_H
