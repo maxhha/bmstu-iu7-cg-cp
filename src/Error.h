@@ -6,5 +6,6 @@ namespace CGCP
     {
         OK,
         NO_FILE,
+        WRITE_FILE,
     };
 } // namespace CGCP

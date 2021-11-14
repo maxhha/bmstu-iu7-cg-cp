@@ -44,6 +44,12 @@ MainWindow::MainWindow(QWidget *parent)
         this,
         &MainWindow::handle_preprocess_progress);
 
+    QObject::connect(
+        this,
+        &MainWindow::saver_progress,
+        this,
+        &MainWindow::handle_saver_progress);
+
     auto view = ui->graphicsView;
     engine_ = std::make_unique<QtEngine>(view);
 
@@ -58,6 +64,10 @@ MainWindow::MainWindow(QWidget *parent)
     loader_dialog_ = new QProgressDialog("Загрузка...", "Отменить", 0, 100, this);
     loader_dialog_->setWindowModality(Qt::WindowModal);
     loader_dialog_->close();
+
+    saver_dialog_ = new QProgressDialog("Сохранение модели...", "Отменить", 0, 100, this);
+    saver_dialog_->setWindowModality(Qt::WindowModal);
+    saver_dialog_->close();
 
     QObject::connect(
         polygonizer_dialog_,
@@ -77,13 +87,19 @@ MainWindow::MainWindow(QWidget *parent)
         this,
         &MainWindow::handle_cancel_loader);
 
+    QObject::connect(
+        saver_dialog_,
+        &QProgressDialog::canceled,
+        this,
+        &MainWindow::handle_cancel_saver);
+
     ui->inputColor1->setColor(QColor("#888088"));
     ui->inputColor2->setColor(QColor("#200036"));
     ui->inputColor3->setColor(QColor("#200036"));
     ui->inputColor4->setColor(QColor("#100018"));
     ui->inputColorBorder->setColor(QColor("#ff3333"));
 
-    triangles_label_ = new QLabel("Разрешение сцены:");
+    triangles_label_ = new QLabel("Количество треугольников:");
     ui->statusbar->addPermanentWidget(triangles_label_);
     triangles_label_ = new QLabel();
     ui->statusbar->addPermanentWidget(triangles_label_);
@@ -97,7 +113,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, double percent)
+void MainWindow::handle_polygonizer_progress(MeshPtr mesh, double percent)
 {
     if (polygonizer_dialog_->wasCanceled())
     {
@@ -108,6 +124,7 @@ void MainWindow::handle_polygonizer_progress(std::shared_ptr<CGCP::Mesh> mesh, d
 
     if (mesh)
     {
+        mesh_ = mesh;
         polygonizer_dialog_->close();
         triangles_label_->setText(QString::number(mesh->triangles().size()));
         engine_->drawer().get("main").setMesh(mesh);
@@ -183,8 +200,10 @@ const char *messageForError(CGCP::Error err)
         return "Нет ошибки!";
     case CGCP::Error::NO_FILE:
         return "Не удалось открыть файл.";
+    case CGCP::Error::WRITE_FILE:
+        return "Не удалось записать в файл.";
     default:
-        return "Неизвестная ошибка";
+        return "Неизвестная ошибка...";
     }
 }
 
@@ -309,7 +328,7 @@ void MainWindow::handle_preprocess_finish(ScanPtr scan)
         engine_->polygonizer()
             .get("dmc")
             .run(
-                [&](std::shared_ptr<CGCP::Mesh> mesh, double percent) -> void
+                [&](MeshPtr mesh, double percent) -> void
                 {
                     emit polygonizer_progress(mesh, percent);
                 });
@@ -425,4 +444,58 @@ void MainWindow::on_buttonDrawerConfig_clicked()
     config["light_z"] = QString::number(ui->inputLightZ->value()).toStdString();
 
     engine_->drawer().get("main").config(config);
+}
+
+void MainWindow::on_buttonSaveMesh_clicked()
+{
+    QString file = QFileDialog::getSaveFileName(
+        this, QString(), QString(), QString("*.stl"));
+
+    engine_->saver()
+        .get("stl")
+        .save(
+            file.toStdString(),
+            mesh_,
+            [&](CGCP::Error err, bool done, double progress)
+            {
+                emit saver_progress(err, done, progress);
+            });
+
+    saver_dialog_->reset();
+    saver_dialog_->show();
+}
+
+void MainWindow::handle_saver_progress(
+    CGCP::Error err,
+    bool done,
+    double percent)
+{
+    if (saver_dialog_->wasCanceled())
+    {
+        return;
+    }
+
+    if (err != CGCP::Error::OK)
+    {
+        saver_dialog_->close();
+        QMessageBox msg;
+        msg.setText(messageForError(err));
+        msg.exec();
+
+        return;
+    }
+
+    if (done)
+    {
+        saver_dialog_->close();
+    }
+    else
+    {
+        saver_dialog_->setValue(percent * 100);
+    }
+}
+
+void MainWindow::handle_cancel_saver()
+{
+    engine_->saver().get("stl").cancel();
 }

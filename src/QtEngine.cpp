@@ -3,6 +3,7 @@
 #include "DMCPolygonizer.h"
 #include "QtMeshDrawer.h"
 #include "RAWLoader.h"
+#include "STLSaver.h"
 
 QtEngine::QtEngine(QGraphicsView *view) : CGCP::Engine()
 {
@@ -22,5 +23,11 @@ QtEngine::QtEngine(QGraphicsView *view) : CGCP::Engine()
         "raw",
         []() -> std::unique_ptr<CGCP::TomographyLoader> {
             return std::make_unique<CGCP::RAWLoader>();
+        });
+
+    saver().add(
+        "stl",
+        []() -> std::unique_ptr<CGCP::MeshSaver> {
+            return std::make_unique<CGCP::STLSaver>();
         });
 };

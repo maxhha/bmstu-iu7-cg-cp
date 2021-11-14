@@ -100,7 +100,8 @@ namespace CGCP
         : loader_(std::make_unique<CGCP::TomographyLoaderSolution>()),
           drawer_(std::make_unique<CGCP::DrawerSolution>()),
           polygonizer_(std::make_unique<CGCP::PolygonizerSolution>()),
-          preprocessor_(std::make_unique<CGCP::TomographyPreprocessor>())
+          preprocessor_(std::make_unique<CGCP::TomographyPreprocessor>()),
+          saver_(std::make_unique<CGCP::MeshSaverSolution>())
     {
         preprocessor()
             .add("average", averageTomographyPreprocess)

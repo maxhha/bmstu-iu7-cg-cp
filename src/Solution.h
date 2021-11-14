@@ -4,8 +4,10 @@
 #include <memory>
 
 #include "MeshDrawer.h"
+#include "MeshSaver.h"
 #include "Polygonizer.h"
 #include "TomographyLoader.h"
+
 namespace CGCP
 {
     template <class T>
@@ -41,4 +43,5 @@ namespace CGCP
     using TomographyLoaderSolution = Solution<TomographyLoader>;
     using DrawerSolution = Solution<MeshDrawer>;
     using PolygonizerSolution = Solution<Polygonizer>;
+    using MeshSaverSolution = Solution<MeshSaver>;
 } // namespace CGCP

@@ -13,6 +13,7 @@ namespace CGCP
         std::unique_ptr<DrawerSolution> drawer_;
         std::unique_ptr<PolygonizerSolution> polygonizer_;
         std::unique_ptr<TomographyPreprocessor> preprocessor_;
+        std::unique_ptr<MeshSaverSolution> saver_;
 
     public:
         Engine();
@@ -21,6 +22,7 @@ namespace CGCP
         DrawerSolution &drawer() { return *drawer_; };
         PolygonizerSolution &polygonizer() { return *polygonizer_; };
         TomographyPreprocessor &preprocessor() { return *preprocessor_; };
+        MeshSaverSolution &saver() { return *saver_; };
 
         virtual ~Engine() = default;
     };

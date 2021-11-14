@@ -92,6 +92,7 @@
     "AABB",
     "CGCP",
     "chrono",
+    "Cubes",
     "Drawer",
     "Eigen",
     "grad",
