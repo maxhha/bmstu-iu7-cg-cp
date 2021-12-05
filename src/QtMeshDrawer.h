@@ -29,6 +29,8 @@ private:
     QImage color_buffer_;
     std::unique_ptr<double[]> z_buffer_;
     std::unique_ptr<double[]> light_buffer_;
+    int z_buffer_w_ = 0;
+    int z_buffer_h_ = 0;
     int light_buffer_w_;
     int light_buffer_h_;
     bool shadow_enabled_ = false;

@@ -106,6 +106,13 @@ void QtMeshDrawer::updateBuffers()
     int w = view_->contentsRect().width();
     int h = view_->contentsRect().height();
 
+    if (z_buffer_h_ == h && z_buffer_w_ == w) {
+        return;
+    }
+
+    z_buffer_h_ = h;
+    z_buffer_w_ = w;
+
     color_buffer_ = QImage(w, h, QImage::Format::Format_ARGB32_Premultiplied);
     z_buffer_ = std::make_unique<double[]>(w * h);
 }
@@ -227,9 +234,11 @@ void QtMeshDrawer::drawMesh()
     if (!mesh_)
         return;
 
+    updateBuffers();
+
     color_rg_.seed(0);
-    int w = view_->contentsRect().width();
-    int h = view_->contentsRect().height();
+    int w = z_buffer_w_;
+    int h = z_buffer_h_;
 
     color_buffer_.fill(Qt::white);
     for (int i = 0; i < w * h; i++)

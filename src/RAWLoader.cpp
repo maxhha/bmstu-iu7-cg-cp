@@ -68,8 +68,6 @@ namespace CGCP
 
             trim(name);
 
-            qDebug() << "name:" << QString::fromStdString(name);
-
             if (name.compare("ObjectFileName") == 0)
             {
                 ss_line >> rawfile_filename;

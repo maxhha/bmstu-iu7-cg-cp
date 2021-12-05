@@ -297,7 +297,7 @@ namespace CGCP
             double v1 = trans_vertices[i]->offset();
             double v2 = trans_vertices[j]->offset();
 
-            if (v1 * v2 < 0)
+            if (v1 * v2 <= 0)
             {
                 points[edge_index] = trans_vertices[i]->position().mix(
                     trans_vertices[j]->position(), get_offset(v1, v2));
