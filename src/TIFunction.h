@@ -21,7 +21,7 @@ namespace CGCP
         TIFunction(ScanPtr &scan, bool clamp, bool with_edges)
             : ContinuesFunction(AABB(
                   scan->scale() * Vec3Df(with_edges ? -1 : 0),
-                  scan->scale() * (scan->shape() + Vec3Ds(with_edges ? 1 : 0)))),
+                  scan->scale() * (scan->shape() + Vec3Ds(with_edges ? 2 : 0)))),
               scan_(std::move(scan)),
               clamp_(clamp){};
 

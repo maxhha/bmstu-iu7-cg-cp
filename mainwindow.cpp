@@ -176,7 +176,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::on_buttonOpen_clicked()
 {
-    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/Sphere/Sphere.dat");
+    // QString filename("C:/Users/devma/Projects/bmstu-iu7-cg-cp/data/TeddyBear/Teddybear.dat");
     QString filename = QFileDialog::getOpenFileName(this);
 
     engine_->loader()
@@ -448,6 +448,14 @@ void MainWindow::on_buttonDrawerConfig_clicked()
 
 void MainWindow::on_buttonSaveMesh_clicked()
 {
+    if (!mesh_)
+    {
+        QMessageBox msg;
+        msg.setText("Нет полигональной модели!");
+        msg.exec();
+        return;
+    }
+
     QString file = QFileDialog::getSaveFileName(
         this, QString(), QString(), QString("*.stl"));
 
