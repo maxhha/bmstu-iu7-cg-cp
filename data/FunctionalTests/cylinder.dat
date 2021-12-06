@@ -1,0 +1,4 @@
+ObjectFileName: cylinder.raw
+Resolution: 128 128 128
+SliceThickness: 1 1 1
+Format: UCHAR
