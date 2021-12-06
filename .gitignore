@@ -73,3 +73,6 @@ Thumbs.db
 
 # Result files
 *.stl
+
+# Some output files
+out
