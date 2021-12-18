@@ -76,3 +76,6 @@ Thumbs.db
 
 # Some output files
 out
+
+# Jupyter notebook
+.ipynb_checkpoints
