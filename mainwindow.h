@@ -31,8 +31,9 @@ signals:
     void preprocess_progress(CGCP::Error err, ScanPtr f, double percent);
 
     void saver_progress(CGCP::Error err, bool done, double percent);
-
+#ifdef __MEASURE_REPEATS_DMC__
     void measure_progress(int percent);
+#endif // __MEASURE_REPEATS_DMC__
 
 private slots:
     void on_buttonTranslate_clicked();
