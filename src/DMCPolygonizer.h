@@ -21,8 +21,10 @@ namespace CGCP
 
         std::vector<TreeNodePtr> generateForest();
         std::shared_ptr<TreeNode> generateTree(
+#ifdef __USE_PARALLEL_DMC__
             ObjectPool<LeafTreeNode> &leafs,
             ObjectPool<BranchTreeNode> &branches,
+#endif // __USE_PARALLEL_DMC__
             const Vec3Df &from,
             const Vec3Df &to,
             int depth = 0);

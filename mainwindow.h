@@ -32,6 +32,8 @@ signals:
 
     void saver_progress(CGCP::Error err, bool done, double percent);
 
+    void measure_progress(int percent);
+
 private slots:
     void on_buttonTranslate_clicked();
 
@@ -69,6 +71,10 @@ private slots:
 
     void on_buttonSaveMesh_clicked();
 
+#ifdef __MEASURE_REPEATS_DMC__
+    void handle_shortcut_measure();
+#endif // __MEASURE_REPEATS_DMC__
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void handle_loader_finish(ScanPtr s);
@@ -84,5 +90,8 @@ private:
     QProgressDialog *loader_dialog_;
     QProgressDialog *saver_dialog_;
     QLabel *triangles_label_;
+#ifdef __MEASURE_REPEATS_DMC__
+    QProgressDialog *measure_dialog_;
+#endif // __MEASURE_REPEATS_DMC__
 };
 #endif // MAINWINDOW_H

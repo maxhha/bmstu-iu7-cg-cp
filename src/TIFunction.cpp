@@ -19,7 +19,7 @@ namespace CGCP
             y >= scan_->shape().y() ||
             z >= scan_->shape().z())
         {
-            return 0;
+            return -1;
         }
 
         return scan_->at(Vec3Ds(x, y, z));

@@ -1,3 +1,4 @@
+#include <QtDebug>
 #include <chrono>
 
 #include "DMCPolygonizer.h"
@@ -5,7 +6,6 @@
 #include "Exception.h"
 
 namespace CGCP
-
 {
     const char *DMCPolygonizer::GRID_DIM_X = "grid_dim_x";
     const char *DMCPolygonizer::GRID_DIM_Y = "grid_dim_y";
@@ -37,8 +37,6 @@ namespace CGCP
         auto tolerance = std::stod(config.at(TOLERANCE));
         auto nominal_weight = std::stod(config.at(NOMINAL_WEIGHT));
 
-        // #TODO: Validate values
-
         dim_ = dim;
         max_depth_ = max_depth;
         tolerance_ = tolerance;
@@ -55,30 +53,66 @@ namespace CGCP
 
     void DMCPolygonizer::threadRun(ProgressCallback progress_receiver)
     {
-        progress_receiver(nullptr, 0);
+        TrianglesPtr triangles;
+#ifdef __MEASURE_REPEATS_DMC__
 
-        progress_receiver_ = progress_receiver;
+#ifdef __USE_PARALLEL_DMC__
+        qInfo() << "__USE_PARALLEL_DMC__";
+#else  // __USE_PARALLEL_DMC__
+        qInfo() << "NOT __USE_PARALLEL_DMC__";
+#endif // __USE_PARALLEL_DMC__
+        qInfo() << GRID_DIM_X << config_.at(GRID_DIM_X).c_str();
+        qInfo() << GRID_DIM_Y << config_.at(GRID_DIM_Y).c_str();
+        qInfo() << GRID_DIM_Z << config_.at(GRID_DIM_Z).c_str();
+        qInfo() << MAX_DEPTH << config_.at(MAX_DEPTH).c_str();
+        qInfo() << NOMINAL_WEIGHT << config_.at(NOMINAL_WEIGHT).c_str();
+        qInfo() << TOLERANCE << config_.at(TOLERANCE).c_str();
 
-        std::size_t total_size = dim_.x() * dim_.y() * dim_.z();
+        using time_point = std::chrono::steady_clock::time_point;
+        unsigned long long total_time = 0;
 
-        progress_ = 0;
-        total_progress_ = 2 * total_size + 1;
-
-        auto forest = generateForest();
-
-        if (isCancelled())
+        for (int measurement = 0; measurement < __MEASURE_REPEATS_DMC__; measurement++)
         {
-            finished();
-            return;
+            triangles = nullptr;
+
+            time_point begin = std::chrono::steady_clock::now();
+
+#endif // __MEASURE_REPEATS_DMC__
+            progress_receiver(nullptr, 0);
+
+            progress_receiver_ = progress_receiver;
+
+            std::size_t total_size = dim_.x() * dim_.y() * dim_.z();
+
+            progress_ = 0;
+            total_progress_ = 2 * total_size + 1;
+
+            auto forest = generateForest();
+
+            if (isCancelled())
+            {
+                finished();
+                return;
+            }
+
+            triangles = enumerateTriangles(forest);
+
+            if (isCancelled())
+            {
+                finished();
+                return;
+            }
+#ifdef __MEASURE_REPEATS_DMC__
+            time_point end = std::chrono::steady_clock::now();
+            total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
+                              end - begin)
+                              .count();
+
+            forest.clear();
         }
 
-        auto triangles = enumerateTriangles(forest);
-
-        if (isCancelled())
-        {
-            finished();
-            return;
-        }
+        qInfo() << "time" << total_time / __MEASURE_REPEATS_DMC__ << "ms";
+#endif // __MEASURE_REPEATS_DMC__
 
         auto origin = function_->domain().mix(Vec3Df(0.5));
 

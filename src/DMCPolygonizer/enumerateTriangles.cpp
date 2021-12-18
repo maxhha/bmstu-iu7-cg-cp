@@ -9,7 +9,10 @@ namespace CGCP
     {
         std::size_t total_size = dim_.x() * dim_.y() * dim_.z();
 
+#ifdef __USE_PARALLEL_DMC__
         std::vector<std::vector<Triangle3Df>> triangles(omp_get_max_threads());
+#define TRIANGLES triangles[omp_get_thread_num()]
+
         std::vector<std::size_t> indices(total_size);
 
         for (std::size_t i = 0; i < total_size; ++i)
@@ -27,6 +30,17 @@ namespace CGCP
                 continue;
 
             auto j = indices[i];
+#else // __USE_PARALLEL_DMC__
+        auto triangles = std::make_shared<std::vector<Triangle3Df>>();
+#define TRIANGLES (*triangles)
+
+        for (std::size_t i = 0; i < total_size; i++)
+        {
+            if (isCancelled())
+                return nullptr;
+
+            auto j = i;
+#endif // __USE_PARALLEL_DMC__
 
             auto ix = j % dim_.x();
             auto iy = j / dim_.x() % dim_.y();
@@ -39,12 +53,12 @@ namespace CGCP
             auto iz0 = iz * dim_.x() * dim_.y();
             auto iz1 = (iz + 1) * dim_.x() * dim_.y();
 
-            enumerateCell(triangles[omp_get_thread_num()], children[j]);
+            enumerateCell(TRIANGLES, children[j]);
 
             if (ix < dim_.x() - 1)
             {
                 enumerateFaceX(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix1 + iy0 + iz0]);
             }
@@ -52,7 +66,7 @@ namespace CGCP
             if (iy < dim_.y() - 1)
             {
                 enumerateFaceY(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix0 + iy1 + iz0]);
             }
@@ -60,7 +74,7 @@ namespace CGCP
             if (iz < dim_.z() - 1)
             {
                 enumerateFaceZ(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix0 + iy0 + iz1]);
             }
@@ -68,7 +82,7 @@ namespace CGCP
             if (ix < dim_.x() - 1 && iy < dim_.y() - 1)
             {
                 enumerateEdgeXY(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix1 + iy0 + iz0],
                     children[ix0 + iy1 + iz0],
@@ -78,7 +92,7 @@ namespace CGCP
             if (iy < dim_.y() - 1 && iz < dim_.z() - 1)
             {
                 enumerateEdgeYZ(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix0 + iy1 + iz0],
                     children[ix0 + iy0 + iz1],
@@ -88,7 +102,7 @@ namespace CGCP
             if (ix < dim_.x() - 1 && iz < dim_.z() - 1)
             {
                 enumerateEdgeXZ(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[(ix0 + iy0 + iz0)],
                     children[(ix1 + iy0 + iz0)],
                     children[(ix0 + iy0 + iz1)],
@@ -98,7 +112,7 @@ namespace CGCP
             if (ix < dim_.x() - 1 && iy < dim_.y() - 1 && iz < dim_.z() - 1)
             {
                 enumerateVertex(
-                    triangles[omp_get_thread_num()],
+                    TRIANGLES,
                     children[ix0 + iy0 + iz0],
                     children[ix1 + iy0 + iz0],
                     children[ix0 + iy1 + iz0],
@@ -108,7 +122,7 @@ namespace CGCP
                     children[ix0 + iy1 + iz1],
                     children[ix1 + iy1 + iz1]);
             }
-
+#ifdef __USE_PARALLEL_DMC__
 #pragma omp critical
             {
                 increaseProgress();
@@ -133,12 +147,7 @@ namespace CGCP
             if (isCancelled())
                 break;
 
-            result->insert(
-                result->end(),
-                std::make_move_iterator(it.begin()),
-                std::make_move_iterator(it.end()));
-
-            it.erase(it.begin(), it.end());
+            result->insert(result->end(), it.begin(), it.end());
         }
 
         if (isCancelled())
@@ -148,5 +157,11 @@ namespace CGCP
         }
 
         return result;
+#else  // __USE_PARALLEL_DMC__
+            increaseProgress();
+        }
+
+        return triangles;
+#endif // __USE_PARALLEL_DMC__
     }
 } // namespace CGCP

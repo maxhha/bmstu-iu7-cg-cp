@@ -7,6 +7,8 @@ CONFIG += c++17
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+DEFINES += __USE_PARALLEL_DMC__
+# DEFINES += "__MEASURE_REPEATS_DMC__=40"
 
 SOURCES += $$files("src/*.cpp", true)
 SOURCES += $$files("widgets/*.cpp", true)

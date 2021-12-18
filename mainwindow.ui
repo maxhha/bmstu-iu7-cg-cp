@@ -31,7 +31,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="load">
        <attribute name="title">
@@ -774,7 +774,7 @@
            <double>10000.000000000000000</double>
           </property>
           <property name="value">
-           <double>0.100000000000000</double>
+           <double>1.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -794,7 +794,7 @@
            <double>10000.000000000000000</double>
           </property>
           <property name="value">
-           <double>1.000000000000000</double>
+           <double>0.500000000000000</double>
           </property>
          </widget>
         </item>
@@ -811,7 +811,7 @@
            <double>-10000.000000000000000</double>
           </property>
           <property name="value">
-           <double>0.500000000000000</double>
+           <double>0.100000000000000</double>
           </property>
          </widget>
         </item>
@@ -888,6 +888,46 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>buttonOpen</tabstop>
+  <tabstop>labelVoxelX</tabstop>
+  <tabstop>labelVoxelY</tabstop>
+  <tabstop>labelVoxelZ</tabstop>
+  <tabstop>buttonChangeVoxel</tabstop>
+  <tabstop>inputDimX</tabstop>
+  <tabstop>inputDimY</tabstop>
+  <tabstop>inputDimZ</tabstop>
+  <tabstop>inputTolerance</tabstop>
+  <tabstop>inputMaxDepth</tabstop>
+  <tabstop>graphicsView</tabstop>
+  <tabstop>inputOffset</tabstop>
+  <tabstop>inputAverage</tabstop>
+  <tabstop>inputIncludeEdges</tabstop>
+  <tabstop>buttonPolygonize</tabstop>
+  <tabstop>buttonSaveMesh</tabstop>
+  <tabstop>buttonRemoveMesh</tabstop>
+  <tabstop>inputLightX</tabstop>
+  <tabstop>inputLightY</tabstop>
+  <tabstop>inputLightZ</tabstop>
+  <tabstop>inputShadowEnabled</tabstop>
+  <tabstop>inputBorderEnabled</tabstop>
+  <tabstop>buttonDrawerConfig</tabstop>
+  <tabstop>buttonReset</tabstop>
+  <tabstop>inputTranslateX</tabstop>
+  <tabstop>inputTranslateY</tabstop>
+  <tabstop>inputTranslateZ</tabstop>
+  <tabstop>buttonTranslate</tabstop>
+  <tabstop>inputScaleX</tabstop>
+  <tabstop>inputScaleY</tabstop>
+  <tabstop>inputScaleZ</tabstop>
+  <tabstop>buttonScale</tabstop>
+  <tabstop>inputRotateX</tabstop>
+  <tabstop>inputRotateY</tabstop>
+  <tabstop>inputRotateZ</tabstop>
+  <tabstop>inputRotateAngle</tabstop>
+  <tabstop>buttonRotate</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

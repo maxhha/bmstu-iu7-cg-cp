@@ -13,7 +13,9 @@
 #include <QMetaType>
 #include <QPolygonF>
 #include <QResizeEvent>
+#include <QShortcut>
 #include <fmt/format.h>
+#include <future>
 #include <math.h>
 #include <type_traits>
 
@@ -92,6 +94,26 @@ MainWindow::MainWindow(QWidget *parent)
         &QProgressDialog::canceled,
         this,
         &MainWindow::handle_cancel_saver);
+
+#ifdef __MEASURE_REPEATS_DMC__
+    measure_dialog_ = new QProgressDialog("Измерение времени...", "Отменить", 0, 100, this);
+    measure_dialog_->setWindowModality(Qt::WindowModal);
+    measure_dialog_->close();
+
+    QObject::connect(
+        this,
+        &MainWindow::measure_progress,
+        measure_dialog_,
+        &QProgressDialog::setValue);
+
+    auto shortcut = new QShortcut(QKeySequence(tr("Ctrl+M", "Measure")), this);
+    QObject::connect(
+        shortcut,
+        &QShortcut::activated,
+        this,
+        &MainWindow::handle_shortcut_measure);
+
+#endif // __MEASURE_REPEATS_DMC__
 
     ui->inputColor1->setColor(QColor("#888088"));
     ui->inputColor2->setColor(QColor("#200036"));
@@ -307,7 +329,7 @@ void MainWindow::handle_preprocess_finish(ScanPtr scan)
 {
     std::shared_ptr<CGCP::ContinuesFunction> f = std::make_shared<CGCP::TIFunction>(
         scan,
-        ui->inputIncludeEdges->isChecked(),
+        false,
         ui->inputIncludeEdges->isChecked());
 
     engine_->polygonizer().get("dmc").function(f);
@@ -507,3 +529,108 @@ void MainWindow::handle_cancel_saver()
 {
     engine_->saver().get("stl").cancel();
 }
+
+#ifdef __MEASURE_REPEATS_DMC__
+
+void MainWindow::handle_shortcut_measure()
+{
+    auto measure_handler =
+        [=](
+            MainWindow::ScanPtr scan) -> void
+    {
+        std::shared_ptr<CGCP::ContinuesFunction> f = std::make_shared<CGCP::TIFunction>(
+            scan,
+            false,
+            ui->inputIncludeEdges->isChecked());
+
+        engine_->polygonizer().get("dmc").function(f);
+
+        auto config = engine_->polygonizer().get("dmc").config();
+
+        config["tolerance"] = QString::number(ui->inputTolerance->value()).toStdString();
+
+        for (auto &d : std::vector({1, 2, 3}))
+        {
+            config["max_depth"] = QString::number(d).toStdString();
+
+            for (auto &n : std::vector({1, 5, 10, 15, 20}))
+            {
+                std::promise<void> polygonize_promise;
+
+                config["grid_dim_x"] =
+                    config["grid_dim_y"] =
+                        config["grid_dim_z"] = fmt::format("{}", n);
+
+                engine_->polygonizer().get("dmc").config(config);
+
+                engine_->polygonizer().get("dmc").run(
+                    [&](MeshPtr mesh, double p) -> void
+                    {
+                        if (mesh)
+                        {
+                            polygonize_promise.set_value();
+                        }
+
+                        emit measure_progress(p * 100);
+                    });
+
+                polygonize_promise.get_future().wait();
+            }
+        }
+    };
+
+    auto preprocess_handler =
+        [=](
+            CGCP::Error err,
+            MainWindow::ScanPtr scan,
+            double p) -> void
+    {
+        if (err != CGCP::Error::OK)
+        {
+            QMessageBox msg;
+            msg.setText(messageForError(err));
+            msg.exec();
+            return;
+        }
+
+        if (scan)
+        {
+            measure_handler(scan);
+            return;
+        }
+        emit measure_progress(p * 100);
+    };
+
+    try
+    {
+        engine_->preprocessor().run(
+            scan_,
+            {{
+                 "average",
+                 {{"size", fmt::format("{}", ui->inputAverage->value())}},
+             },
+             {"offset",
+              {{"value", fmt::format("{}", -ui->inputOffset->value())}}}},
+            preprocess_handler);
+    }
+    catch (CGCP::Exception &e)
+    {
+        const char *text = e.message().c_str();
+
+        if (e.message().compare("Scan is not set") == 0)
+        {
+            text = "Нет данных томографии";
+        }
+
+        QMessageBox msg;
+        msg.setText(text);
+        msg.exec();
+
+        return;
+    }
+
+    measure_dialog_->reset();
+    measure_dialog_->show();
+}
+
+#endif // __MEASURE_REPEATS_DMC__

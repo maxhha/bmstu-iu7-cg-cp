@@ -85,7 +85,12 @@
     "complex": "cpp",
     "set": "cpp",
     "unordered_set": "cpp",
-    "hash_map": "cpp"
+    "hash_map": "cpp",
+    "future": "cpp",
+    "cfenv": "cpp",
+    "iostream": "cpp",
+    "cinttypes": "cpp",
+    "typeindex": "cpp"
   },
   "cmake.configureOnOpen": false,
   "cSpell.words": [

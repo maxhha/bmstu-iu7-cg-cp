@@ -16,7 +16,12 @@
         "lib/fmt/include",
         "lib/eigen"
       ],
-      "defines": ["_DEBUG", "UNICODE", "_UNICODE"],
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE",
+        "__MEASURE_REPEATS_DMC__=10"
+      ],
       "compilerPath": "g++",
       "cStandard": "gnu17",
       "cppStandard": "gnu++17",
